@@ -61,7 +61,7 @@ export class LaunchPage implements OnInit {
     private sqlLiteProvider: SqlLiteProvider,
     private store: Store<State>
   ) {
-    this.logoUrl = 'assets/img/logo.png';
+    this.logoUrl = 'assets/img/emblem.png';
   }
 
   ngOnInit() {

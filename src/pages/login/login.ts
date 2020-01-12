@@ -99,7 +99,7 @@ export class LoginPage implements OnInit, OnDestroy {
     private store: Store<State>
   ) {
     this.colorSettings$ = this.store.select(getCurrentUserColorSettings);
-    this.logoUrl = 'assets/img/logo.png';
+    this.logoUrl = 'assets/img/emblem.png';
     this.offlineIcon = 'assets/icon/offline.png';
     this.isLoginFormValid = false;
     this.isLoginProcessActive = false;

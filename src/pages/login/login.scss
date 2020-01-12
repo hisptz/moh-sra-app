@@ -1,4 +1,10 @@
 page-login {
+
+  .login {
+    background-color: #05448b !important;
+  }
+  
+  background-color: #ff0000 !important;
   .strike {
     display: block;
     text-align: center;
@@ -31,9 +37,9 @@ page-login {
     color: #ffa500;
   }
   .topSLogan p {
-    color: #82b1ff;
+    color: #ffffff;
     text-align: center;
-    font-style: italic;
+    font-style: normal;
   }
   .bottomSLogan {
     text-align: center;

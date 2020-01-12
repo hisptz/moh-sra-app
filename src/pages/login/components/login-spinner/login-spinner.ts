@@ -29,7 +29,7 @@ export class LoginSpinnerComponent implements OnInit {
   };
 
   constructor() {
-    this.icon.appLogo = 'assets/img/logo.png';
+    this.icon.appLogo = 'assets/img/icon.png';
     this.icon.dhisLogo = 'assets/img/dhis_logo.png';
   }
 
