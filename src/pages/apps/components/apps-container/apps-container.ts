@@ -21,8 +21,9 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { AppItem } from '../../../../models';
+import { Component, OnInit, Input, Output, EventEmitter } from "@angular/core";
+import { AppItem } from "../../../../models";
+import * as _ from 'lodash';
 
 /**
 
@@ -32,12 +33,13 @@ import { AppItem } from '../../../../models';
  * Components.
  */
 @Component({
-  selector: 'apps-container',
-  templateUrl: 'apps-container.html'
+  selector: "apps-container",
+  templateUrl: "apps-container.html"
 })
 export class AppsContainerComponent implements OnInit {
   @Input()
   authorizedApps: AppItem[];
+  SRAAuthorizedApps: AppItem[];
 
   @Output()
   selectedApp = new EventEmitter();
@@ -48,7 +50,13 @@ export class AppsContainerComponent implements OnInit {
     this.animationEffect = {};
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    const omittedApps = ["event_capture", "tracker_capture", "dashboard"];
+    this.SRAAuthorizedApps = _.filter(
+      this.authorizedApps,
+      (app: AppItem) => !_.includes(omittedApps, app.id)
+    );
+  }
 
   selectView(app: AppItem) {
     this.applyAnimation(app.id);
@@ -58,9 +66,9 @@ export class AppsContainerComponent implements OnInit {
   }
 
   applyAnimation(key: any) {
-    this.animationEffect[key] = 'animated bounceIn';
+    this.animationEffect[key] = "animated bounceIn";
     setTimeout(() => {
-      this.animationEffect[key] = '';
+      this.animationEffect[key] = "";
     }, 50);
   }
 
