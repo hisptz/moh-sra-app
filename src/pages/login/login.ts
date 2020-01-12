@@ -51,6 +51,7 @@ import { EncryptionProvider } from '../../providers/encryption/encryption';
 import { BackgroundMode } from '@ionic-native/background-mode';
 import { Observable } from 'rxjs';
 import { getAppMetadata } from '../../helpers';
+import { omitFromProcesses } from '../../helpers/omited-process-for-sra-app.helper';
 
 /**
  * Generated class for the LoginPage page.
@@ -105,7 +106,9 @@ export class LoginPage implements OnInit, OnDestroy {
     this.isOnLogin = true;
     this.showOverallProgressBar = true;
     this.topThreeTranslationCodes = this.appTranslationProvider.getTopThreeSupportedTranslationCodes();
-    this.processes = getAppMetadata();
+
+    // Omitting some of the process not related with SRA 
+    this.processes = omitFromProcesses(getAppMetadata());
   }
 
   ngOnInit() {

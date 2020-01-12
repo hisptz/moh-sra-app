@@ -26,16 +26,16 @@ const _ = require('lodash');
 import { DEFAULT_APP_METADATA } from '../constants';
 
 export function getAppMetadata() {
-  const programMetadata = DEFAULT_APP_METADATA.programs;
+  // const programMetadata = DEFAULT_APP_METADATA.programs;
   const dataSetMetadata = DEFAULT_APP_METADATA.dataSets;
   const omittedKey = [];
   if (
-    (programMetadata && programMetadata.defaultIds.length > 0) ||
+    // (programMetadata && programMetadata.defaultIds.length > 0) ||
     (dataSetMetadata && dataSetMetadata.defaultIds.length > 0)
   ) {
-    if (programMetadata && programMetadata.defaultIds.length === 0) {
-      omittedKey.push('programs');
-    }
+    // if (programMetadata && programMetadata.defaultIds.length === 0) {
+    //   omittedKey.push('programs');
+    // }
     if (dataSetMetadata && dataSetMetadata.defaultIds.length === 0) {
       omittedKey.push('dataSets');
     }
