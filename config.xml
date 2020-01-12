@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.hipstz.dhis2.dhis2touch" version="2.3.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>DHIS 2 Touch</name>
+<widget id="com.hipstz.dhis2.mohsraapp" version="2.3.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>MOH SRA APP</name>
     <description>An awesome dhis 2 mobile experience</description>
     <author email="hi@ionicframework" href="http://ionicframework.com/">Ionic Framework Team</author>
     <access origin="*" />
@@ -26,7 +26,7 @@
     </edit-config>
     <platform name="android">
         <allow-intent href="market:*" />
-        <preference name="android-targetSdkVersion" value="28"/>
+        <preference name="android-targetSdkVersion" value="28" />
         <icon density="ldpi" src="resources/android/icon/drawable-ldpi-icon.png" />
         <icon density="mdpi" src="resources/android/icon/drawable-mdpi-icon.png" />
         <icon density="hdpi" src="resources/android/icon/drawable-hdpi-icon.png" />
