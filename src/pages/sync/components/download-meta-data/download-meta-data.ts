@@ -78,7 +78,6 @@ export class DownloadMetaDataComponent implements OnInit {
         isPasswordEncode: false
       };
       this.resources = omitNONSRAMetadata(this.getListOfResources());
-      console.log("RESOURCES::: " + JSON.stringify(this.resources));
       this.autoSelect("");
       this.isLoading = false;
     });
