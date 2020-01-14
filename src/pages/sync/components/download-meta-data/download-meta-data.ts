@@ -21,12 +21,13 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, OnInit, Input } from '@angular/core';
-import { AppProvider } from '../../../../providers/app/app';
-import { UserProvider } from '../../../../providers/user/user';
-import { DATABASE_STRUCTURE } from '../../../../models';
-import * as _ from 'lodash';
-import { EncryptionProvider } from '../../../../providers/encryption/encryption';
+import { Component, OnInit, Input } from "@angular/core";
+import { AppProvider } from "../../../../providers/app/app";
+import { UserProvider } from "../../../../providers/user/user";
+import { DATABASE_STRUCTURE } from "../../../../models";
+import * as _ from "lodash";
+import { EncryptionProvider } from "../../../../providers/encryption/encryption";
+import { omitNONSRAMetadata } from "../../../../helpers/omitted-metadata-download.helper";
 /**
  * Generated class for the DownloadMetaDataComponent component.
  *
@@ -34,8 +35,8 @@ import { EncryptionProvider } from '../../../../providers/encryption/encryption'
  * for more info on Angular Components.
  */
 @Component({
-  selector: 'download-meta-data',
-  templateUrl: 'download-meta-data.html'
+  selector: "download-meta-data",
+  templateUrl: "download-meta-data.html"
 })
 export class DownloadMetaDataComponent implements OnInit {
   @Input() colorSettings: any;
@@ -56,10 +57,10 @@ export class DownloadMetaDataComponent implements OnInit {
     private encryptionProvider: EncryptionProvider
   ) {
     this.icons = {
-      all: 'assets/icon/check-all.png',
-      none: 'assets/icon/uncheck-all.png',
-      reset: 'assets/icon/not-allowed.png',
-      done: 'assets/icon/circle-tick.png'
+      all: "assets/icon/check-all.png",
+      none: "assets/icon/uncheck-all.png",
+      reset: "assets/icon/not-allowed.png",
+      done: "assets/icon/circle-tick.png"
     };
   }
 
@@ -76,8 +77,9 @@ export class DownloadMetaDataComponent implements OnInit {
         password: newPassord,
         isPasswordEncode: false
       };
-      this.resources = this.getListOfResources();
-      this.autoSelect('');
+      this.resources = omitNONSRAMetadata(this.getListOfResources());
+      console.log("RESOURCES::: " + JSON.stringify(this.resources));
+      this.autoSelect("");
       this.isLoading = false;
     });
   }
@@ -97,11 +99,11 @@ export class DownloadMetaDataComponent implements OnInit {
         });
       }
     });
-    return _.orderBy(resources, 'name', 'asc');
+    return _.orderBy(resources, "name", "asc");
   }
 
   autoSelect(selectType) {
-    if (selectType == 'selectAll') {
+    if (selectType == "selectAll") {
       this.resources.map((resource: any) => {
         resource.status = true;
       });
@@ -120,7 +122,7 @@ export class DownloadMetaDataComponent implements OnInit {
       .filter((resource: any) => resource.status)
       .map(resource => resource.name);
     if (resourceUpdated.length == 0) {
-      this.appProvider.setNormalNotification('Please select at least one item');
+      this.appProvider.setNormalNotification("Please select at least one item");
     } else {
       this.updateResources(resourceUpdated);
     }
@@ -154,16 +156,16 @@ export class DownloadMetaDataComponent implements OnInit {
     if (error) {
       this.appProvider.setNormalNotification(error, 10000);
     } else if (failedProcesses && failedProcesses.length > 0) {
-      let errorMessage = '';
+      let errorMessage = "";
       failedProcesses.map(process => {
         const error = failedProcessesErrors[failedProcesses.indexOf(process)];
         errorMessage +=
           (process.charAt(0).toUpperCase() + process.slice(1))
-            .replace(/([A-Z])/g, ' $1')
+            .replace(/([A-Z])/g, " $1")
             .trim() +
-          ' : ' +
+          " : " +
           this.appProvider.getSanitizedMessage(error) +
-          '; ';
+          "; ";
       });
       this.appProvider.setNormalNotification(errorMessage, 10000);
     }
@@ -177,10 +179,10 @@ export class DownloadMetaDataComponent implements OnInit {
     const updatedResources = resources
       .filter((resource: any) => resource.status)
       .map(resource => resource.displayName)
-      .join(', ');
-    this.autoSelect('');
+      .join(", ");
+    this.autoSelect("");
     const message =
-      updatedResources.split(', ').length > 1
+      updatedResources.split(", ").length > 1
         ? `${updatedResources} have been updated successfully`
         : `${updatedResources} has been updated successfully`;
     this.appProvider.setNormalNotification(message);
