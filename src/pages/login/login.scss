@@ -1,7 +1,32 @@
 page-login {
 
+  ion-content {
+    background-color: #05448b !important;
+    height: 100% !important;
+    display: block !important;
+    display: flex!important;
+    align-content: center!important;
+    align-items: center!important;
+
+    ion-grid {
+      ion-row {
+        ion-col {
+          #login-title {
+            font-weight: 400;
+            font-size: 15px;
+          }
+        }
+      }
+    }
+  }
+
   .login {
     background-color: #05448b !important;
+    height: 100% !important;
+    display: block !important;
+    display: flex!important;
+    align-content: center!important;
+    align-items: center!important;
   }
   
   background-color: #ff0000 !important;

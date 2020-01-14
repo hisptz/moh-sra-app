@@ -37,13 +37,13 @@
       [showOverallProgressBar]="showOverallProgressBar" [isOnLogin]="isOnLogin" [processes]="processes">
     </login-metadata-sync>
   </div>
-  <ion-grid class="animated fadeIn">
+  <ion-grid class="login animated fadeIn">
     <ion-row *ngIf="!isLoginProcessActive">
       <ion-col class="topSLogan">
         <div class="logo">
           <img [src]="logoUrl">
         </div>
-        <p [translate]="'Innovation in every dimension'"></p>
+        <p id="login-title" [translate]="'MOH Star Rating Assessment(SRA) Mobile APP'"></p>
       </ion-col>
     </ion-row>
     <ion-row *ngIf="!isLoginProcessActive">
