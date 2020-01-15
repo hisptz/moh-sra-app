@@ -51,7 +51,7 @@ import { EncryptionProvider } from '../../providers/encryption/encryption';
 import { BackgroundMode } from '@ionic-native/background-mode';
 import { Observable } from 'rxjs';
 import { getAppMetadata } from '../../helpers';
-import { omitFromProcesses } from '../../helpers/omited-process-for-sra-app.helper';
+import { omitFromProcesses } from '../../helpers/srt-process.helper';
 
 /**
  * Generated class for the LoginPage page.

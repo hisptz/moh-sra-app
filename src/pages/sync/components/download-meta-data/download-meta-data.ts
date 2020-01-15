@@ -27,7 +27,7 @@ import { UserProvider } from "../../../../providers/user/user";
 import { DATABASE_STRUCTURE } from "../../../../models";
 import * as _ from "lodash";
 import { EncryptionProvider } from "../../../../providers/encryption/encryption";
-import { omitNONSRAMetadata } from "../../../../helpers/omitted-metadata-download.helper";
+import { omitNONSRAMetadata } from "../../../../helpers/srt-metadata.helper";
 /**
  * Generated class for the DownloadMetaDataComponent component.
  *
