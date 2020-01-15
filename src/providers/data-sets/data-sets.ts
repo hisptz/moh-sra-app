@@ -20,14 +20,15 @@
  * @since 2015
  * @author Joseph Chingalo <profschingalo@gmail.com>
  */
-import { Injectable } from '@angular/core';
-import { SqlLiteProvider } from '../sql-lite/sql-lite';
-import { HttpClientProvider } from '../http-client/http-client';
-import { Observable } from 'rxjs/Observable';
-import * as _ from 'lodash';
-import { DataSet } from '../../models/data-set';
-import { CurrentUser } from '../../models/current-user';
-import { DEFAULT_APP_METADATA } from '../../constants';
+import { Injectable } from "@angular/core";
+import { SqlLiteProvider } from "../sql-lite/sql-lite";
+import { HttpClientProvider } from "../http-client/http-client";
+import { Observable } from "rxjs/Observable";
+import * as _ from "lodash";
+import { DataSet } from "../../models/data-set";
+import { CurrentUser } from "../../models/current-user";
+import { DEFAULT_APP_METADATA } from "../../constants";
+import { SRTDatasets } from "../../helpers/srt-datasets.helper";
 
 /*
   Generated class for the DataSetsProvider provider.
@@ -45,7 +46,7 @@ export class DataSetsProvider {
     private SqlLite: SqlLiteProvider,
     private HttpClient: HttpClientProvider
   ) {
-    this.resource = 'dataSets';
+    this.resource = "dataSets";
   }
 
   /**
@@ -59,8 +60,8 @@ export class DataSetsProvider {
    *
    * @param dataSet
    */
-  setLastSelectedDataSet(dataSet) {
-    this.lastSelectedDataSet = dataSet;
+  setLastSelectedDataSet(dataSets) {
+    this.lastSelectedDataSet = SRTDatasets(dataSets)[0];
   }
 
   /**
@@ -70,7 +71,7 @@ export class DataSetsProvider {
    */
   getAllDataSetsSMSCodeGeneration(currentUser: CurrentUser): Observable<any> {
     let url =
-      '/api/dataSets.json?fields=id,dataSetElements[dataElement[id,categoryCombo[categoryOptionCombos[id]]]],dataElements[id,categoryCombo[categoryOptionCombos[id]]]';
+      "/api/dataSets.json?fields=id,dataSetElements[dataElement[id,categoryCombo[categoryOptionCombos[id]]]],dataElements[id,categoryCombo[categoryOptionCombos[id]]]";
     return new Observable(observer => {
       this.HttpClient.get(url, false, currentUser, this.resource, 25).subscribe(
         (response: any) => {
@@ -130,7 +131,7 @@ export class DataSetsProvider {
   getAllDataSetElementsMapper(currentUser: CurrentUser): Observable<any> {
     return new Observable(observer => {
       this.SqlLite.getAllDataFromTable(
-        'dataSetElements',
+        "dataSetElements",
         currentUser.currentDatabase
       ).subscribe(
         (dataSetElements: any) => {
@@ -182,8 +183,8 @@ export class DataSetsProvider {
   ): Observable<any> {
     return new Observable(observer => {
       this.SqlLite.getDataFromTableByAttributes(
-        'dataElements',
-        'id',
+        "dataElements",
+        "id",
         dataElementIds,
         currentUser.currentDatabase
       ).subscribe(
@@ -194,7 +195,7 @@ export class DataSetsProvider {
               categoryCombo: dataElement.categoryCombo
             };
           });
-          observer.next(_.keyBy(dataElementObjects, 'id'));
+          observer.next(_.keyBy(dataElementObjects, "id"));
           observer.complete();
         },
         error => {
@@ -212,14 +213,14 @@ export class DataSetsProvider {
    * @returns {Observable<any>}
    */
   getAssignedDataSets(orgUnitId, dataSetIds, currentUser): Observable<any> {
-    let attributeKey = 'id';
+    let attributeKey = "id";
     let attributeArray = [];
     return new Observable(observer => {
       this.getDataSetSourceDataSetIds(orgUnitId, currentUser).subscribe(
         (dataSetSourceDataSetIds: any) => {
           if (
             currentUser.authorities &&
-            currentUser.authorities.indexOf('ALL') > -1
+            currentUser.authorities.indexOf("ALL") > -1
           ) {
             attributeArray = dataSetSourceDataSetIds;
           } else {
@@ -248,7 +249,7 @@ export class DataSetsProvider {
                   }
                 }
                 if (!hasSelectedDataSet) {
-                  this.setLastSelectedDataSet(dataSets[0]);
+                  this.setLastSelectedDataSet(dataSets);
                 }
               } else {
                 this.resetDataSets();
@@ -325,7 +326,7 @@ export class DataSetsProvider {
    * @returns {Observable<any>}
    */
   getDataSetById(dataSetId, currentUser): Observable<any> {
-    let attributeKey = 'id';
+    let attributeKey = "id";
     let attributeArray = [dataSetId];
     return new Observable(observer => {
       this.SqlLite.getDataFromTableByAttributes(
@@ -356,8 +357,8 @@ export class DataSetsProvider {
    * @returns {Observable<any>}
    */
   getDataSetSectionsIds(dataSetId, currentUser): Observable<any> {
-    const resource = 'dataSetSections';
-    let attributeKey = 'id';
+    const resource = "dataSetSections";
+    let attributeKey = "id";
     let attributeArray = [dataSetId];
     let sectionIds = [];
     return new Observable(observer => {
@@ -388,10 +389,10 @@ export class DataSetsProvider {
    * @returns {Observable<any>}
    */
   getDataSetDataElements(dataSetId, currentUser): Observable<any> {
-    let attributeKey = 'id';
+    let attributeKey = "id";
     let attributeArray = [dataSetId];
     let dataSetElements = [];
-    const resource = 'dataSetElements';
+    const resource = "dataSetElements";
     return new Observable(observer => {
       this.SqlLite.getDataFromTableByAttributes(
         resource,
@@ -432,8 +433,8 @@ export class DataSetsProvider {
    * @returns {Observable}
    */
   getDataSetIndicatorIds(dataSetId, currentUser): Observable<any> {
-    const resource = 'dataSetIndicators';
-    let attributeKey = 'id';
+    const resource = "dataSetIndicators";
+    let attributeKey = "id";
     let attributeArray = [dataSetId];
     let indicatorIds = [];
     return new Observable(observer => {
@@ -475,9 +476,9 @@ export class DataSetsProvider {
         const fields = `fields=id,name,timelyDays,formType,dataEntryForm[htmlCode],compulsoryDataElementOperands[id,name,dimensionItemType,dimensionItem],version,periodType,openFuturePeriods,expiryDays,dataSetElements[dataElement[id]],dataElements[id],organisationUnits[id],sections[id],indicators[id],categoryCombo[id,name,categoryOptionCombos[id,name,categoryOptions[id]],categories[id,name,categoryOptions[id,name,organisationUnits[id]]]]`;
         const filter =
           defaultIds && defaultIds.length > 0
-            ? `filter=id:in:[${defaultIds.join(',')}]`
+            ? `filter=id:in:[${defaultIds.join(",")}]`
             : `filter=organisationUnits.path:ilike:${userOrgUnitIds.join(
-                '&filter=organisationUnits.path:ilike:'
+                "&filter=organisationUnits.path:ilike:"
               )}&rootJunction=OR`;
         const url = `/api/${this.resource}.json?${fields}&${filter}`;
         const pageSize = defaultIds && defaultIds.length > 0 ? 10 : 15;
@@ -495,7 +496,7 @@ export class DataSetsProvider {
                 dataSets,
                 currentUser
               );
-              observer.next(_.uniqBy(dataSetSResponse, 'id'));
+              observer.next(_.uniqBy(dataSetSResponse, "id"));
               observer.complete();
             } catch (e) {
               observer.error(e);
@@ -516,7 +517,7 @@ export class DataSetsProvider {
     let filteredDataSets = [];
     const { dataSets } = currentUser;
     const { authorities } = currentUser;
-    if (authorities && authorities.indexOf('ALL') > -1) {
+    if (authorities && authorities.indexOf("ALL") > -1) {
       filteredDataSets = _.concat(filteredDataSets, dataSetsResponse);
     } else {
       dataSetsResponse.map((dataSetObject: any) => {
@@ -642,7 +643,7 @@ export class DataSetsProvider {
   saveDataEntryFormDesign(dataSets, currentUser): Observable<any> {
     return new Observable(observer => {
       let entryFormDesign = [];
-      const resource = 'dataSetDesign';
+      const resource = "dataSetDesign";
       dataSets.map((dataSet: any) => {
         if (dataSet.dataEntryForm && dataSet.dataEntryForm.htmlCode) {
           entryFormDesign.push({
@@ -674,11 +675,11 @@ export class DataSetsProvider {
 
   getDataEntryFormDesign(dataSetId, currentUser: CurrentUser): Observable<any> {
     return new Observable(observer => {
-      let entryFormDesign = '';
-      const resource = 'dataSetDesign';
+      let entryFormDesign = "";
+      const resource = "dataSetDesign";
       this.SqlLite.getDataFromTableByAttributes(
         resource,
-        'id',
+        "id",
         [dataSetId],
         currentUser.currentDatabase
       ).subscribe(
@@ -704,7 +705,7 @@ export class DataSetsProvider {
    */
   saveDataSetIndicators(dataSets, currentUser): Observable<any> {
     let dataSetIndicators = [];
-    const resource = 'dataSetIndicators';
+    const resource = "dataSetIndicators";
     dataSets.map((dataSet: any) => {
       if (dataSet.indicators && dataSet.indicators.length > 0) {
         dataSetIndicators = _.concat(dataSetIndicators, {
@@ -745,7 +746,7 @@ export class DataSetsProvider {
    */
   saveDataSetSource(dataSets, currentUser): Observable<any> {
     let dataSetSource = [];
-    const resource = 'dataSetSource';
+    const resource = "dataSetSource";
     dataSets.map((dataSet: any) => {
       if (dataSet.organisationUnits && dataSet.organisationUnits.length > 0) {
         dataSetSource = _.concat(dataSetSource, {
@@ -817,7 +818,7 @@ export class DataSetsProvider {
   }
 
   getAllDataSetSources(currentUser: CurrentUser): Observable<any> {
-    const resource = 'dataSetSource';
+    const resource = "dataSetSource";
     return new Observable(observer => {
       this.SqlLite.getAllDataFromTable(
         resource,
@@ -842,7 +843,7 @@ export class DataSetsProvider {
    */
   saveDataSetSections(dataSets, currentUser): Observable<any> {
     let dataSetSections = [];
-    const resource = 'dataSetSections';
+    const resource = "dataSetSections";
     dataSets.map((dataSet: any) => {
       if (dataSet.sections && dataSet.sections.length > 0) {
         dataSetSections = _.concat(dataSetSections, {
@@ -883,7 +884,7 @@ export class DataSetsProvider {
    */
   saveDataSetOperands(dataSets, currentUser): Observable<any> {
     let dataSetOperands = [];
-    const resource = 'dataSetOperands';
+    const resource = "dataSetOperands";
     dataSets.map((dataSet: any) => {
       if (
         dataSet.compulsoryDataElementOperands &&
@@ -927,11 +928,11 @@ export class DataSetsProvider {
     dataSetId: string,
     currentUser: CurrentUser
   ): Observable<any> {
-    const resource = 'dataSetOperands';
+    const resource = "dataSetOperands";
     return new Observable(observer => {
       this.SqlLite.getDataFromTableByAttributes(
         resource,
-        'dataSetId',
+        "dataSetId",
         [dataSetId],
         currentUser.currentDatabase
       ).subscribe(
@@ -954,7 +955,7 @@ export class DataSetsProvider {
    */
   saveDataSetElements(dataSets, currentUser): Observable<any> {
     let dataSetElements = [];
-    const resource = 'dataSetElements';
+    const resource = "dataSetElements";
     dataSets.map((dataSet: any) => {
       if (dataSet.dataSetElements && dataSet.dataSetElements.length > 0) {
         dataSetElements = _.concat(dataSetElements, {
@@ -1004,7 +1005,7 @@ export class DataSetsProvider {
    * @returns {any}
    */
   sortDataSetList(dataSetList) {
-    return _.sortBy(dataSetList, ['name']);
+    return _.sortBy(dataSetList, ["name"]);
   }
 
   /**
@@ -1014,7 +1015,7 @@ export class DataSetsProvider {
    * @returns {Observable<any>}
    */
   getDataSetsByIds(dataSetsIds, currentUser): Observable<any> {
-    let attribute = 'id';
+    let attribute = "id";
     let dataSetsResponse = [];
     return new Observable(observer => {
       this.SqlLite.getDataFromTableByAttributes(

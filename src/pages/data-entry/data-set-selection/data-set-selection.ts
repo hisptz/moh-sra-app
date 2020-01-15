@@ -21,12 +21,13 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, OnInit } from '@angular/core';
-import { IonicPage, NavParams, ViewController } from 'ionic-angular';
-import { AppTranslationProvider } from '../../../providers/app-translation/app-translation';
-import { Store } from '@ngrx/store';
-import { State, getCurrentUserColorSettings } from '../../../store';
-import { Observable } from 'rxjs';
+import { Component, OnInit } from "@angular/core";
+import { IonicPage, NavParams, ViewController } from "ionic-angular";
+import { AppTranslationProvider } from "../../../providers/app-translation/app-translation";
+import { Store } from "@ngrx/store";
+import { State, getCurrentUserColorSettings } from "../../../store";
+import { Observable } from "rxjs";
+import { SRTDatasets } from "../../../helpers/srt-datasets.helper";
 /**
  * Generated class for the DataSetSelectionPage page.
  *
@@ -36,8 +37,8 @@ import { Observable } from 'rxjs';
 
 @IonicPage()
 @Component({
-  selector: 'page-data-set-selection',
-  templateUrl: 'data-set-selection.html'
+  selector: "page-data-set-selection",
+  templateUrl: "data-set-selection.html"
 })
 export class DataSetSelectionPage implements OnInit {
   dataSetsList: any;
@@ -53,14 +54,13 @@ export class DataSetSelectionPage implements OnInit {
     private appTranslation: AppTranslationProvider
   ) {
     this.translationMapper = {};
-    this.icon = 'assets/icon/form.png';
+    this.icon = "assets/icon/form.png";
     this.colorSettings$ = this.store.select(getCurrentUserColorSettings);
   }
 
   ngOnInit() {
-    this.dataSetsList = this.navParams.get('dataSetsList');
-    this.currentDataSet = this.navParams.get('currentDataSet');
-
+    this.dataSetsList = SRTDatasets(this.navParams.get("dataSetsList"));
+    this.currentDataSet = this.navParams.get("currentDataSet");
     this.appTranslation.getTransalations(this.getValuesToTranslate()).subscribe(
       (data: any) => {
         this.translationMapper = data;
@@ -70,8 +70,8 @@ export class DataSetSelectionPage implements OnInit {
   }
   getFilteredList(ev: any) {
     let val = ev.target.value;
-    this.dataSetsList = this.navParams.get('dataSetsList');
-    if (val && val.trim() != '') {
+    this.dataSetsList = SRTDatasets(this.navParams.get("dataSetsList"));
+    if (val && val.trim() != "") {
       this.dataSetsList = this.dataSetsList.filter((dataSet: any) => {
         return dataSet.name.toLowerCase().indexOf(val.toLowerCase()) > -1;
       });
@@ -86,7 +86,7 @@ export class DataSetSelectionPage implements OnInit {
   }
 
   getValuesToTranslate() {
-    return ['There is no data entry form to select'];
+    return ["There is no data entry form to select"];
   }
 
   trackByFn(index, item) {

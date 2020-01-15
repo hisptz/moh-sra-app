@@ -40,16 +40,11 @@ export interface Dataset {
     categoryCombo: CategoryCombo;
 }
 
-export function SRTDatasets(datasets: Dataset[]): Dataset[] {
+export function SRTDatasets(datasets: Dataset[]): any {
     const SRTAllowedDatasets = ["nqKkegk1y8U", "RixTh0Xs0A7", "fiDtcNUzKI6"];
-    if (_.isArray(datasets)) {
-        return _.filter(datasets, (dataset: Dataset) =>
+    return _.isArray(datasets)
+        ? _.filter(datasets, (dataset: Dataset) =>
             _.includes(SRTAllowedDatasets, dataset.id)
-        );
-    } else {
-        const SRTDatasets = [];
-        return _.filter([...SRTDatasets, datasets], (dataset: Dataset) =>
-            _.includes(SRTAllowedDatasets, dataset.id)
-        );
-    }
+        )
+        : [];
 }
