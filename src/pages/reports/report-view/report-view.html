@@ -23,24 +23,22 @@
 *
 -->
 <ion-header>
-
   <ion-navbar [color]="(colorSettings$ |async).colorAttributes.main">
     <ion-title>
       <span [translate]="'Report view'"></span>
     </ion-title>
   </ion-navbar>
-
 </ion-header>
 
-
 <ion-content>
-
   <ion-grid>
-
     <div *ngIf="isLoading">
       <ion-row>
         <ion-col>
-          <loading loadingSize="large" [loadingMessage]="loadingMessage"></loading>
+          <loading
+            loadingSize="large"
+            [loadingMessage]="loadingMessage"
+          ></loading>
         </ion-col>
       </ion-row>
     </div>
@@ -52,18 +50,24 @@
             <div>
               <b>
                 <span [translate]="'Report name'"></span>
-              </b> : {{ reportName }}
-              <br>
-              <span *ngIf="selectedOrganisationUnit && selectedOrganisationUnit.id">
+              </b>
+              : {{ reportName }}
+              <br />
+              <span
+                *ngIf="selectedOrganisationUnit && selectedOrganisationUnit.id"
+              >
                 <b>
                   <span [translate]="'Organisation unit'"></span>
-                </b> : {{ selectedOrganisationUnit.name }}
-                <br>
+                </b>
+                : {{ selectedOrganisationUnit.name }}
+                <br />
               </span>
               <span *ngIf="selectedPeriod && selectedPeriod.name">
                 <b>
                   <span [translate]="'Period'"></span>
-                </b> : {{ selectedPeriod.name }}</span>
+                </b>
+                : {{ selectedPeriod.name }}</span
+              >
             </div>
           </div>
         </ion-col>
@@ -73,17 +77,54 @@
         <ion-col>
           <div *ngIf="reportType && reportType == 'dataSetReport'">
             <div class="reportView">
-              <data-set-report [dataSetId]="reportId" [currentUser]="currentUser" [selectedOrganisationUnit]="selectedOrganisationUnit"
-                [selectedPeriod]="selectedPeriod"></data-set-report>
+              <data-set-report
+                [dataSetId]="reportId"
+                [currentUser]="currentUser"
+                [selectedOrganisationUnit]="selectedOrganisationUnit"
+                [selectedPeriod]="selectedPeriod"
+              ></data-set-report>
             </div>
           </div>
+          <div>
+            <section class="full-width">
+              <button
+                (click)="downloadPDFReport()"
+                [color]="(colorSettings$ |async).colorAttributes.main"
+                class="download-report"
+                ion-button
+              >
+                Download Report
+              </button>
+              &nbsp;
+              <button
+                (click)="sharePDFReport()"
+                [color]="(colorSettings$ |async).colorAttributes.main"
+                class="download-report"
+                ion-button
+              >
+                Share Report
+              </button>
+            </section>
+          </div>
           <div *ngIf="reportType && reportType == 'standardReport'">
-            <div class="reportView" [innerHTML]="_htmlMarkup"></div>
+            <div *ngIf="isReportDownloaded">
+              <ion-row>
+                <ion-col>
+                  <loading
+                    loadingSize="large"
+                    [loadingMessage]="reportMessage"
+                  ></loading>
+                </ion-col>
+              </ion-row>
+            </div>
+            <div
+              id="printable-area"
+              class="reportView"
+              [innerHTML]="_htmlMarkup"
+            ></div>
           </div>
         </ion-col>
       </ion-row>
     </div>
-
   </ion-grid>
-
 </ion-content>

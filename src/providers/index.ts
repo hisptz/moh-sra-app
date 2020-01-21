@@ -79,6 +79,8 @@ import { AppColorProvider } from './app-color/app-color';
 import { ValidationRulesProvider } from './validation-rules/validation-rules';
 import { OfflineCompletenessProvider } from './offline-completeness/offline-completeness';
 import { EventCompletenessProvider } from './event-completeness/event-completeness';
+import { FileOpener } from '@ionic-native/file-opener/ngx';
+import { File } from "@ionic-native/file";
 
 export const appProviders = [
   AppTranslationProvider,
@@ -139,5 +141,7 @@ export const nativePlugins = [
   DatePicker,
   Geolocation,
   SplashScreen,
-  BackgroundMode
+  BackgroundMode,
+  File,
+  FileOpener,
 ];
