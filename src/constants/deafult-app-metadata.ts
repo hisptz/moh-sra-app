@@ -23,98 +23,98 @@
  */
 export const DEFAULT_APP_METADATA = {
   organisationUnits: {
-    resourceType: 'communication',
-    displayName: 'Organisation Units',
+    resourceType: "communication",
+    displayName: "Organisation Units",
     isOnLogin: true,
     defaultIds: []
   },
   validationRules: {
-    resourceType: 'entryForm',
-    displayName: 'Validation Rules',
+    resourceType: "entryForm",
+    displayName: "Validation Rules",
     isOnLogin: true,
     defaultIds: []
   },
   dataStore: {
-    resourceType: 'report',
-    displayName: 'Data Store',
+    resourceType: "report",
+    displayName: "Data Store",
     isOnLogin: false,
     defaultIds: []
   },
   sections: {
-    resourceType: 'entryForm',
-    displayName: 'Sections',
+    resourceType: "entryForm",
+    displayName: "Sections",
     isOnLogin: true,
     defaultIds: []
   },
   dataElements: {
-    resourceType: 'entryForm',
-    displayName: 'Data Elements',
+    resourceType: "entryForm",
+    displayName: "Data Elements",
     isOnLogin: true,
     defaultIds: []
   },
   categoryCombos: {
-    resourceType: 'entryForm',
-    displayName: 'Category combos',
+    resourceType: "entryForm",
+    displayName: "Category combos",
     isOnLogin: true,
     defaultIds: []
   },
   dataSets: {
-    resourceType: 'entryForm',
-    displayName: 'Data Sets',
+    resourceType: "entryForm",
+    displayName: "Data Sets",
     isOnLogin: true,
     defaultIds: []
   },
   smsCommand: {
-    resourceType: 'entryForm',
-    displayName: 'SMS Command',
+    resourceType: "entryForm",
+    displayName: "SMS Command",
     isOnLogin: true,
     defaultIds: []
   },
   indicators: {
-    displayName: 'Indicators',
-    resourceType: 'report',
+    displayName: "Indicators",
+    resourceType: "report",
     isOnLogin: true,
     defaultIds: []
   },
   reports: {
-    resourceType: 'report',
-    displayName: 'Reports',
+    resourceType: "report",
+    displayName: "Reports",
     isOnLogin: true,
-    defaultIds: []
+    defaultIds: ["HWrNdR2oQIt", "iQMrTwGKfIb", "JW9mscsCfos"]
   },
   constants: {
-    resourceType: 'report',
-    displayName: 'Constants',
+    resourceType: "report",
+    displayName: "Constants",
     isOnLogin: true,
     defaultIds: []
   },
   programs: {
-    resourceType: 'event',
-    displayName: 'Programs',
+    resourceType: "event",
+    displayName: "Programs",
     isOnLogin: true,
     defaultIds: []
   },
   programStageSections: {
-    resourceType: 'event',
-    displayName: 'Program Stage Sections',
+    resourceType: "event",
+    displayName: "Program Stage Sections",
     isOnLogin: true,
     defaultIds: []
   },
   programRules: {
-    resourceType: 'event',
-    displayName: 'Program Rules',
+    resourceType: "event",
+    displayName: "Program Rules",
     isOnLogin: true,
     defaultIds: []
   },
   programRuleActions: {
-    resourceType: 'event',
-    displayName: 'Program Rule Actions',
+    resourceType: "event",
+    displayName: "Program Rule Actions",
     isOnLogin: true,
     defaultIds: []
   },
   programRuleVariables: {
-    resourceType: 'event',
-    displayName: 'Program Rules Variables',
+    resourceType: "event",
+    displayName: "Program Rules Variables",
     isOnLogin: true,
     defaultIds: []
   }

@@ -21,18 +21,18 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, OnInit } from '@angular/core';
-import { IonicPage, NavController, NavParams } from 'ionic-angular';
-import { UserProvider } from '../../providers/user/user';
-import { AppProvider } from '../../providers/app/app';
-import { StandardReportProvider } from '../../providers/standard-report/standard-report';
-import { SqlLiteProvider } from '../../providers/sql-lite/sql-lite';
-import { AppTranslationProvider } from '../../providers/app-translation/app-translation';
-import * as _ from 'lodash';
-import { Store } from '@ngrx/store';
-import { State, getCurrentUserColorSettings } from '../../store';
-import { Observable } from 'rxjs';
-import { CurrentUser } from '../../models';
+import { Component, OnInit } from "@angular/core";
+import { IonicPage, NavController, NavParams } from "ionic-angular";
+import { UserProvider } from "../../providers/user/user";
+import { AppProvider } from "../../providers/app/app";
+import { StandardReportProvider } from "../../providers/standard-report/standard-report";
+import { SqlLiteProvider } from "../../providers/sql-lite/sql-lite";
+import { AppTranslationProvider } from "../../providers/app-translation/app-translation";
+import * as _ from "lodash";
+import { Store } from "@ngrx/store";
+import { State, getCurrentUserColorSettings } from "../../store";
+import { Observable } from "rxjs";
+import { CurrentUser } from "../../models";
 /**
  * Generated class for the ReportsPage page.
  *
@@ -42,8 +42,8 @@ import { CurrentUser } from '../../models';
 
 @IonicPage()
 @Component({
-  selector: 'page-reports',
-  templateUrl: 'reports.html'
+  selector: "page-reports",
+  templateUrl: "reports.html"
 })
 export class ReportsPage implements OnInit {
   currentUser: CurrentUser;
@@ -74,8 +74,8 @@ export class ReportsPage implements OnInit {
   }
 
   ngOnInit() {
-    this.icons.standardReport = 'assets/icon/reports.png';
-    this.icons.dataSetReport = 'assets/icon/form.png';
+    this.icons.standardReport = "assets/icon/reports.png";
+    this.icons.dataSetReport = "assets/icon/form.png";
     this.isLoading = true;
     this.reportList = [];
     this.user.getCurrentUser().subscribe((user: any) => {
@@ -85,19 +85,27 @@ export class ReportsPage implements OnInit {
   }
 
   loadReportsList(user) {
-    this.loadingMessage = 'Discovering reports';
+    this.loadingMessage = "Discovering reports";
     this.standardReportProvider.getReportList(user).subscribe(
       (reportList: any) => {
-        this.reportList = reportList;
-        this.reportListCopy = reportList;
-        this.filteringReports('all');
+        this.reportList = this.getOnlyStandardReports(reportList);
+        this.reportListCopy = this.getOnlyStandardReports(reportList);
+        // this.filteringReports("all");
+        this.filteringReports("standardReport");
         this.isLoading = false;
       },
       error => {
-        this.appProvider.setNormalNotification('Fail  to discover reports');
+        this.appProvider.setNormalNotification("Fail  to discover reports");
         this.isLoading = false;
       }
     );
+  }
+
+  getOnlyStandardReports(stdReports: any) {
+    const STDReport = ["HWrNdR2oQIt", "iQMrTwGKfIb", "JW9mscsCfos"];
+    return _.filter(stdReports, (report: any) => {
+      return _.includes(STDReport, report.id);
+    });
   }
 
   selectReport(report) {
@@ -114,22 +122,22 @@ export class ReportsPage implements OnInit {
         report.reportParams
       )
     ) {
-      this.navCtrl.push('ReportParameterSelectionPage', parameter);
+      this.navCtrl.push("ReportParameterSelectionPage", parameter);
     } else {
-      this.navCtrl.push('ReportViewPage', parameter);
+      this.navCtrl.push("ReportViewPage", parameter);
     }
   }
 
   reloadReports(refresher) {
     refresher.complete();
-    this.loadingMessage = 'Downloading reports from server';
+    this.loadingMessage = "Downloading reports from server";
     this.isLoading = true;
-    let resource = 'reports';
+    let resource = "reports";
     this.standardReportProvider
       .downloadReportsFromServer(this.currentUser)
       .subscribe(
         (response: any) => {
-          this.loadingMessage = 'Preparing local storage for updates';
+          this.loadingMessage = "Preparing local storage for updates";
           this.sqLite
             .dropTable(resource, this.currentUser.currentDatabase)
             .subscribe(
@@ -138,7 +146,7 @@ export class ReportsPage implements OnInit {
                   .createTable(resource, this.currentUser.currentDatabase)
                   .subscribe(
                     () => {
-                      this.loadingMessage = 'Saving reports from server';
+                      this.loadingMessage = "Saving reports from server";
 
                       this.standardReportProvider
                         .saveReportsFromServer(response, this.currentUser)
@@ -149,7 +157,7 @@ export class ReportsPage implements OnInit {
                           () => {
                             this.isLoading = true;
                             this.appProvider.setNormalNotification(
-                              'Failed to save reports'
+                              "Failed to save reports"
                             );
                           }
                         );
@@ -157,7 +165,7 @@ export class ReportsPage implements OnInit {
                     () => {
                       this.isLoading = true;
                       this.appProvider.setNormalNotification(
-                        'Failed to prepare local storage for updates'
+                        "Failed to prepare local storage for updates"
                       );
                     }
                   );
@@ -165,14 +173,14 @@ export class ReportsPage implements OnInit {
               () => {
                 this.isLoading = true;
                 this.appProvider.setNormalNotification(
-                  'Failed to prepare local storage for updates'
+                  "Failed to prepare local storage for updates"
                 );
               }
             );
         },
         () => {
           this.isLoading = true;
-          this.appProvider.setNormalNotification('Failed to download reports');
+          this.appProvider.setNormalNotification("Failed to download reports");
         }
       );
   }
@@ -180,7 +188,7 @@ export class ReportsPage implements OnInit {
   getFilteredReportList(event: any) {
     const value = event.target.value;
     const reportData = this.reportListCopy;
-    if (value && value.trim() !== '') {
+    if (value && value.trim() !== "") {
       const reports = reportData.filter((report: any) => {
         return report.name.toLowerCase().indexOf(value.toLowerCase()) > -1;
       });
@@ -199,12 +207,12 @@ export class ReportsPage implements OnInit {
   }
 
   filteringReports(reportType: any) {
-    if (reportType == 'all') {
+    if (reportType == "all") {
       const reports = this.reportListCopy;
       this.reportList = this.getReportsWithPaginations(reports);
       this.currentPage = 1;
     } else {
-      const reports = _.filter(this.reportListCopy, ['type', reportType]);
+      const reports = _.filter(this.reportListCopy, ["type", reportType]);
       this.reportList = this.getReportsWithPaginations(reports);
       this.currentPage = 1;
     }
