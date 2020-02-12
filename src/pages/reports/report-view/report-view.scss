@@ -1,9 +1,27 @@
 page-report-view {
 
-  .report{
+  ion-grid {
+    padding: 0px !important;
+    margin: 0px !important;
+
+    ion-row {
+      ion-col {
+        padding: 0px !important;
+        margin: 0px !important;
+
+        .doctor {
+          background-color: #fffb29;
+          color: #032f62 !important;
+        }
+      }
+    }
+  }
+
+  .report {
     background-color: #F4F4F4;
   }
-  .reportView{
+
+  .reportView {
     overflow: auto;
   }
 

@@ -36,6 +36,7 @@ import { Observable } from "rxjs";
 import { FileOpener } from "@ionic-native/file-opener/ngx";
 import { File, IWriteOptions } from "@ionic-native/file";
 import * as jsPDF from "jspdf";
+import * as _ from 'lodash';
 // import domtoimage from "dom-to-image";
 import domtoimage from "dom-to-image-improved";
 import b64toBlob from "b64-to-blob";
@@ -127,10 +128,15 @@ export class ReportViewPage implements OnInit {
       .fromData(printableReportMarkup, options)
       .then(response => {
         this.isReportDownloaded = false;
+        this.appProvider.setNormalNotification(
+          "Sharing started successfully",
+          3000
+        );
         console.log("SHARING SUCCESSFULLY LAUNCHED...", response);
       })
       .catch(err => {
         this.isReportDownloaded = false;
+        this.appProvider.setNormalNotification(err, 3000);
         console.log("ERROR::: " + err);
       });
   }
@@ -140,7 +146,12 @@ export class ReportViewPage implements OnInit {
     document.addEventListener("deviceready", () => {
       this.isReportDownloaded = true;
       // PDF File Name
-      const fileName = `${this.selectedOrganisationUnit}_${this.selectedPeriod}.pdf`;
+
+      const orgUnitName = this.selectedOrganisationUnit.name
+        .split(" ")
+        .join("_");
+      const periodName = this.selectedPeriod.name;
+      const fileName = `SRA_${orgUnitName}_${periodName}.pdf`;
 
       // Options for Downloading PDF
       const options = {
@@ -150,47 +161,105 @@ export class ReportViewPage implements OnInit {
 
       const printableReportMarkup = document.getElementById("printable-area")
         .innerHTML;
+      
+      // const finalPrintable = _.template(printableReportMarkup);
+
+      // console.log("CAINAMIST::: " + JSON.stringify(finalPrintable));
 
       cordova.plugins.pdf
         .fromData(printableReportMarkup, options)
-        .then(response => {
+        .then(base64Data => {
           // To define the type of the Blob
           const contentType = "application/pdf";
 
           // if cordova.file is not available use instead :
           // var folderpath = "file:///storage/emulated/0/Download/";
           const folderpath = cordova.file.externalRootDirectory + "Download/"; //you can select other folders
-          this.savebaseAsPDF(folderpath, fileName, response, contentType);
+          this.savebaseAsPDF(folderpath, fileName, base64Data, contentType);
+          // this.printPDFReport(folderpath, fileName, base64Data, contentType)
         })
         .catch(err => console.log("Error " + JSON.stringify(err)));
     });
   }
 
+  // printPDFReport(folderpath, filename, base64, contentType) {
+  //   const printableReportMarkup = document.getElementById("printable-area")
+  //     .innerHTML;
+  //   domtoimage
+  //     .toJpeg(printableReportMarkup, { quality: 0.95 })
+  //     .then(dataUrl => {
+  //       let pdf = new jsPDF("p", "pt", "a4");
+  //       pdf.addImage(dataUrl, "JPEG", 40, 40, 520, 150);
+
+  //       let pdfOutput = pdf.output();
+  //       // using ArrayBuffer will allow you to put image inside PDF
+  //       let buffer = new ArrayBuffer(pdfOutput.length);
+  //       let array = new Uint8Array(buffer);
+  //       for (var i = 0; i < pdfOutput.length; i++) {
+  //         array[i] = pdfOutput.charCodeAt(i);
+  //       }
+  //       let options: IWriteOptions = { replace: true };
+
+  //       // pdf.save(filename)
+  //       this.file
+  //         .createFile(folderpath, filename, true)
+  //         .then(createFileResponse => {
+  //           console.log("SUCCESSFULLY CREATING FILE::: " + createFileResponse);
+  //           this.file
+  //             .writeFile(folderpath, filename, buffer, {
+  //               replace: true,
+  //               append: true
+  //             })
+  //             .then(writeFileResponse => {
+  //               this.isReportDownloaded = false;
+  //               console.log(
+  //                 "WRITTING CONTENT SUCCESSFULLY::: " + writeFileResponse
+  //               );
+  //             })
+  //             .catch(err => {
+  //               this.isReportDownloaded = false;
+  //               console.log("ERROR IN WRITTING IN THE FILE " + err);
+  //             });
+  //         })
+  //         .catch(err => {
+  //           this.isReportDownloaded = false;
+  //           console.log("ERROR CREATING:::" + err);
+  //         });
+  //     });
+  // }
+
   savebaseAsPDF(folderpath, filename, content, contentType) {
     // Convert the base64 string in a Blob
-    const DataBlob = b64toBlob(content, contentType);
+    // const DataBlob = b64toBlob(content, contentType);
+    const imageBlob = this.Base64ToBlob(content, contentType);
     this.file
       .createFile(folderpath, filename, true)
       .then(createFileResponse => {
         console.log("SUCCESSFULLY CREATING FILE::: " + createFileResponse);
         this.file
-          .writeFile(folderpath, filename, DataBlob, {
+          .writeFile(folderpath, filename, imageBlob, {
             replace: true,
             append: true
           })
           .then(writeFileResponse => {
             this.isReportDownloaded = false;
+            this.appProvider.setNormalNotification(
+              "File downloaded successfully",
+              3000
+            );
             console.log(
               "WRITTING CONTENT SUCCESSFULLY::: " + writeFileResponse
             );
           })
           .catch(err => {
             this.isReportDownloaded = false;
+            this.appProvider.setNormalNotification(err, 3000);
             console.log("ERROR IN WRITTING IN THE FILE " + err);
           });
       })
       .catch(err => {
         this.isReportDownloaded = false;
+        this.appProvider.setNormalNotification(err, 3000);
         console.log("ERROR CREATING:::" + err);
       });
   }
