@@ -159,8 +159,6 @@ export class HttpClientProvider {
                       paginatedUrls.push(paginatedUrl);
                     }
                   }
-                  console.log("CAINAMIST::: " + paginatedUrls);
-                  console.log("CAINAMIST LENGTH::: " + paginatedUrls.length);
 
                   const that = this;
                   let completedStages = 0;
