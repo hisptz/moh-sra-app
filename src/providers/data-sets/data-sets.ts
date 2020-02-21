@@ -481,7 +481,14 @@ export class DataSetsProvider {
                 "&filter=organisationUnits.path:ilike:"
               )}&rootJunction=OR`;
         const url = `/api/${this.resource}.json?${fields}&${filter}`;
-        const pageSize = defaultIds && defaultIds.length > 0 ? 10 : 15;
+
+        // Chingalo's Implementation in determining page size
+        // const pageSize = defaultIds && defaultIds.length > 0 ? 10 : 15;
+
+        // Walter's Implementation in determining page size
+        const pageSize =
+          defaultIds && defaultIds.length > 10 ? 10 : defaultIds.length;
+
         this.HttpClient.get(
           url,
           false,

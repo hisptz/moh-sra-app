@@ -62,7 +62,7 @@ export const DEFAULT_APP_METADATA = {
     resourceType: "entryForm",
     displayName: "Data Sets",
     isOnLogin: true,
-    defaultIds: []
+    defaultIds: ['nqKkegk1y8U', 'RixTh0Xs0A7', 'fiDtcNUzKI6']
   },
   smsCommand: {
     resourceType: "entryForm",

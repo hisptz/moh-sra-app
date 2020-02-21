@@ -21,17 +21,17 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Injectable } from '@angular/core';
-import { HTTP } from '@ionic-native/http';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/timeout';
-import { Observable } from 'rxjs/Observable';
-import { CurrentUser } from '../../models/current-user';
-import { EncryptionProvider } from '../encryption/encryption';
-import { NetworkAvailabilityProvider } from '../network-availability/network-availability';
-import { Storage } from '@ionic/storage';
-import * as _ from 'lodash';
-import * as async from 'async';
+import { Injectable } from "@angular/core";
+import { HTTP } from "@ionic-native/http";
+import "rxjs/add/operator/map";
+import "rxjs/add/operator/timeout";
+import { Observable } from "rxjs/Observable";
+import { CurrentUser } from "../../models/current-user";
+import { EncryptionProvider } from "../encryption/encryption";
+import { NetworkAvailabilityProvider } from "../network-availability/network-availability";
+import { Storage } from "@ionic/storage";
+import * as _ from "lodash";
+import * as async from "async";
 /*
   Generated class for the HttpClientProvider provider.
 
@@ -54,16 +54,16 @@ export class HttpClientProvider {
    * @returns {any}
    */
   getUrlBasedOnDhisVersion(url, user) {
-    if (url.indexOf('/api/') == -1 && url.indexOf('.json') > 0) {
-      url = '/api/' + url;
+    if (url.indexOf("/api/") == -1 && url.indexOf(".json") > 0) {
+      url = "/api/" + url;
     }
     if (user.dhisVersion && parseInt(user.dhisVersion) < 25) {
-      let pattern = '/api/' + user.dhisVersion;
-      url = url.replace(pattern, '/api/');
+      let pattern = "/api/" + user.dhisVersion;
+      url = url.replace(pattern, "/api/");
     } else if (user.dhisVersion && parseInt(user.dhisVersion) >= 25) {
-      let pattern = '/api/' + user.dhisVersion;
-      url = url.replace('/api', '/api');
-      url = url.replace('/api', pattern);
+      let pattern = "/api/" + user.dhisVersion;
+      url = url.replace("/api", "/api");
+      url = url.replace("/api", pattern);
     }
     return encodeURI(url);
   }
@@ -85,7 +85,7 @@ export class HttpClientProvider {
           observer.next(sanitizedUser);
           observer.complete();
         } else {
-          this.storage.get('user').then(
+          this.storage.get("user").then(
             currentUser => {
               currentUser = JSON.parse(currentUser);
               if (currentUser.isPasswordEncode) {
@@ -102,7 +102,7 @@ export class HttpClientProvider {
           );
         }
       } else {
-        observer.error({ error: 'network is not available' });
+        observer.error({ error: "network is not available" });
       }
     });
   }
@@ -123,7 +123,7 @@ export class HttpClientProvider {
     resourceName?,
     pageSize?
   ): Observable<any> {
-    let apiUrl = '';
+    let apiUrl = "";
     return new Observable(observer => {
       this.getSanitizedUser(user).subscribe(
         (sanitizedUser: CurrentUser) => {
@@ -135,11 +135,12 @@ export class HttpClientProvider {
           const headers = this.http.getBasicAuthHeader(username, password);
           if (resourceName && pageSize) {
             let promises = [];
+
             const testUrl =
               user.serverUrl +
-              '/api/' +
+              "/api/" +
               resourceName +
-              '.json?fields=none&pageSize=' +
+              ".json?fields=none&pageSize=" +
               pageSize;
             this.http
               .get(testUrl, {}, headers)
@@ -148,11 +149,19 @@ export class HttpClientProvider {
                 if (initialResponse.pager.pageCount) {
                   initialResponse[resourceName] = [];
                   const paginatedUrls = [];
-                  for (let i = 1; i <= initialResponse.pager.pageCount; i++) {
-                    const paginatedUrl =
-                      apiUrl + '&pageSize=' + pageSize + '&page=' + i;
+                  if (pageSize <= 10) {
+                    const paginatedUrl = apiUrl + "&pageSize=" + pageSize;
                     paginatedUrls.push(paginatedUrl);
+                  } else {
+                    for (let i = 1; i <= initialResponse.pager.pageCount; i++) {
+                      const paginatedUrl =
+                        apiUrl + "&pageSize=" + pageSize + "&page=" + i;
+                      paginatedUrls.push(paginatedUrl);
+                    }
                   }
+                  console.log("CAINAMIST::: " + paginatedUrls);
+                  console.log("CAINAMIST LENGTH::: " + paginatedUrls.length);
+
                   const that = this;
                   let completedStages = 0;
                   async.mapLimit(
@@ -238,14 +247,14 @@ export class HttpClientProvider {
    * @returns {Observable<any>}
    */
   post(url, data, user?): Observable<any> {
-    let apiUrl = '';
+    let apiUrl = "";
     return new Observable(observer => {
       this.getSanitizedUser(user).subscribe(
         (sanitizedUser: CurrentUser) => {
           const { username, password } = sanitizedUser;
           this.http.clearCookies();
           const headers = this.http.getBasicAuthHeader(username, password);
-          this.http.setDataSerializer('json');
+          this.http.setDataSerializer("json");
           apiUrl =
             user.serverUrl + this.getUrlBasedOnDhisVersion(url, sanitizedUser);
           this.http
@@ -266,14 +275,14 @@ export class HttpClientProvider {
   }
 
   put(url, data, user?): Observable<any> {
-    let apiUrl = '';
+    let apiUrl = "";
     return new Observable(observer => {
       this.getSanitizedUser(user).subscribe(
         (sanitizedUser: CurrentUser) => {
           const { username, password } = sanitizedUser;
           this.http.clearCookies();
           const headers = this.http.getBasicAuthHeader(username, password);
-          this.http.setDataSerializer('json');
+          this.http.setDataSerializer("json");
           apiUrl =
             user.serverUrl + this.getUrlBasedOnDhisVersion(url, sanitizedUser);
           this.http
@@ -300,14 +309,14 @@ export class HttpClientProvider {
    * @returns {Observable<any>}
    */
   delete(url, user?): Observable<any> {
-    let apiUrl = '';
+    let apiUrl = "";
     return new Observable(observer => {
       this.getSanitizedUser(user).subscribe(
         (sanitizedUser: CurrentUser) => {
           const { username, password } = sanitizedUser;
           this.http.clearCookies();
           const headers = this.http.getBasicAuthHeader(username, password);
-          this.http.setDataSerializer('json');
+          this.http.setDataSerializer("json");
           apiUrl =
             user.serverUrl + this.getUrlBasedOnDhisVersion(url, sanitizedUser);
           this.http
