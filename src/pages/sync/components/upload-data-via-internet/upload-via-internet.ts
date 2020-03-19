@@ -47,8 +47,10 @@ export class UploadViaInternetComponent implements OnInit {
   itemsToUpload: Array<string>;
   importSummaries: any;
   dataObject: any;
+  success: any;
   translationMapper: any;
   progress: string;
+  isUploading: boolean;
 
   constructor(
     private modalCtrl: ModalController,
@@ -57,6 +59,7 @@ export class UploadViaInternetComponent implements OnInit {
     private synchronizationProvider: SynchronizationProvider
   ) {
     this.progress = '';
+    this.success = "#42f554"
     this.isLoading = true;
     this.itemsToUpload = [];
     this.dataObject = {
@@ -71,18 +74,19 @@ export class UploadViaInternetComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.isUploading = true;
     this.appTranslation.getTransalations(this.getValuesToTranslate()).subscribe(
       (data: any) => {
         this.translationMapper = data;
-        this.loadingCurrentUsereInfromation();
+        this.loadingCurrentUsereInfromation(this.isUploading);
       },
       error => {
-        this.loadingCurrentUsereInfromation();
+        this.loadingCurrentUsereInfromation(this.isUploading);
       }
     );
   }
 
-  loadingCurrentUsereInfromation() {
+  loadingCurrentUsereInfromation(isUploading: boolean) {
     let key = 'Discovering current user information';
     this.loadingMessage = this.translationMapper[key]
       ? this.translationMapper[key]
@@ -90,14 +94,14 @@ export class UploadViaInternetComponent implements OnInit {
     this.user.getCurrentUser().subscribe(
       (user: any) => {
         this.currentUser = user;
-        this.loadingDataToUpload();
+        this.loadingDataToUpload(isUploading);
       },
       error => {}
     );
   }
 
-  loadingDataToUpload() {
-    this.synchronizationProvider.getDataForUpload(this.currentUser).subscribe(
+  loadingDataToUpload(isUploading: boolean) {
+    this.synchronizationProvider.getDataForUpload(this.currentUser, isUploading).subscribe(
       dataObject => {
         this.dataObject = dataObject;
         this.isLoading = false;
@@ -167,7 +171,7 @@ export class UploadViaInternetComponent implements OnInit {
         Object.keys(this.selectedItems).forEach((key: string) => {
           this.selectedItems[key] = false;
         });
-        this.loadingDataToUpload();
+        this.loadingDataToUpload(this.isUploading);
       });
       modal.present();
     }

@@ -279,7 +279,8 @@ export class SmsCommandProvider {
         this.resourceName,
         'id',
         ids,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (smsCommands: any) => {
           if (smsCommands.length > 0) {
@@ -338,7 +339,8 @@ export class SmsCommandProvider {
         'dataValues',
         'id',
         ids,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataValues: any) => {
           dataValues.map((dataValue: any) => {

@@ -28,18 +28,21 @@
 </div>
 <div *ngIf="!isLoading">
   <ion-row>
-    <ion-col *ngIf="!showLoadingMessage">
+    <ion-col *ngIf="!isLoading">
       <ion-item>
         <ion-label>
           <span [translate]="'Aggregate data'"></span>
           &nbsp;
           <ion-badge [color]="colorSettings.colorAttributes.secondary">{{ dataObject.dataValues.length }}</ion-badge>
+          &nbsp;out of&nbsp;
+          <ion-badge [color]="colorSettings.colorAttributes.secondary">{{ dataObject.dataValuesToUpload.length }}
+          </ion-badge>
         </ion-label>
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.dataValues"
           disabled="{{(dataObject.dataValues.length == 0)?'true':'false'}}" (ionChange)="updateItemsToUpload()">
         </ion-checkbox>
       </ion-item>
-      <ion-item>
+      <!-- <ion-item>
         <ion-label>
           <span [translate]="'Events'"></span>
           &nbsp;
@@ -48,8 +51,8 @@
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.events"
           disabled="{{(dataObject.events.length == 0)?'true':'false'}}" (ionChange)="updateItemsToUpload()">
         </ion-checkbox>
-      </ion-item>
-      <ion-item>
+      </ion-item> -->
+      <!-- <ion-item>
         <ion-label>
           <span [translate]="'Events for tracker'"></span>
           &nbsp;
@@ -59,8 +62,8 @@
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.eventsForTracker"
           disabled="{{(dataObject.eventsForTracker.length == 0)?'true':'false'}}" (ionChange)="updateItemsToUpload()">
         </ion-checkbox>
-      </ion-item>
-      <ion-item>
+      </ion-item> -->
+      <!-- <ion-item>
         <ion-label>
           <span [translate]="'Enrollments'"></span>
           &nbsp;
@@ -69,8 +72,8 @@
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.Enrollments"
           disabled="{{(dataObject.Enrollments.length == 0)?'true':'false'}}" (ionChange)="updateItemsToUpload()">
         </ion-checkbox>
-      </ion-item>
-      <ion-item>
+      </ion-item> -->
+      <!-- <ion-item>
         <ion-label>
           <span [translate]="'dataStore'"></span>
           &nbsp;
@@ -79,7 +82,7 @@
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.dataStore"
           disabled="{{(dataObject.dataStore.length == 0)?'true':'false'}}" (ionChange)="updateItemsToUpload()">
         </ion-checkbox>
-      </ion-item>
+      </ion-item> -->
       <button [color]="colorSettings.colorAttributes.secondary" [disabled]="itemsToUpload.length == 0" ion-button full
         text-capitalize (tap)="uploadData()">
         {{ translationMapper['Upload data'] }}

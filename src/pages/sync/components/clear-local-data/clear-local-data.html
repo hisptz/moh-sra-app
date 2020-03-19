@@ -27,7 +27,7 @@
 </div>
 <div *ngIf="!isLoading">
   <ion-row>
-    <ion-col *ngIf="!showLoadingMessage">
+    <ion-col *ngIf="!isLoading">
       <ion-item>
         <ion-label>
           {{ translationMapper['Aggregate data'] }}&nbsp;
@@ -36,30 +36,30 @@
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.dataValues" disabled="{{(dataObject.dataValues == 0)?'true':'false'}}"
           (ionChange)="updateItemsToBeDeleted()"></ion-checkbox>
       </ion-item>
-      <ion-item>
+      <!-- <ion-item>
         <ion-label>
           {{ translationMapper['Events'] }}&nbsp;
           <ion-badge [color]="colorSettings.colorAttributes.secondary">{{ dataObject.events }}</ion-badge>
         </ion-label>
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.events" disabled="{{(dataObject.events == 0)?'true':'false'}}"
           (ionChange)="updateItemsToBeDeleted()"></ion-checkbox>
-      </ion-item>
-      <ion-item>
+      </ion-item> -->
+      <!-- <ion-item>
         <ion-label>
           {{ translationMapper['Events for tracker'] }}&nbsp;
           <ion-badge [color]="colorSettings.colorAttributes.secondary">{{ dataObject.eventsForTracker }}</ion-badge>
         </ion-label>
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.eventsForTracker"
           disabled="{{(dataObject.eventsForTracker == 0)?'true':'false'}}" (ionChange)="updateItemsToBeDeleted()"></ion-checkbox>
-      </ion-item>
-      <ion-item>
+      </ion-item> -->
+      <!-- <ion-item>
         <ion-label>
           {{ translationMapper['Enrollments'] }}&nbsp;
           <ion-badge [color]="colorSettings.colorAttributes.secondary">{{ dataObject.enrollments }}</ion-badge>
         </ion-label>
         <ion-checkbox [color]="colorSettings.colorAttributes.secondary" [(ngModel)]="selectedItems.enrollments"
           disabled="{{(dataObject.enrollments == 0)?'true':'false'}}" (ionChange)="updateItemsToBeDeleted()"></ion-checkbox>
-      </ion-item>
+      </ion-item> -->
       <button [color]="colorSettings.colorAttributes.secondary" [disabled]="( itemsToBeDeleted.length == 0)" ion-button
         full text-capitalize (tap)="deleteSelectedItems()">
         {{ translationMapper['Clear local data'] }}

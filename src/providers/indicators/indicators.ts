@@ -108,7 +108,8 @@ export class IndicatorsProvider {
           this.resource,
           attributeKey,
           indicatorIds,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (indicators: any) => {

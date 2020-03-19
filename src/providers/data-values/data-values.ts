@@ -21,13 +21,13 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Injectable } from '@angular/core';
-import { HttpClientProvider } from '../http-client/http-client';
-import { SqlLiteProvider } from '../sql-lite/sql-lite';
-import { NetworkAvailabilityProvider } from '../network-availability/network-availability';
-import { Observable } from 'rxjs/Observable';
-import * as _ from 'lodash';
-import { CurrentUser } from '../../models';
+import { Injectable } from "@angular/core";
+import { HttpClientProvider } from "../http-client/http-client";
+import { SqlLiteProvider } from "../sql-lite/sql-lite";
+import { NetworkAvailabilityProvider } from "../network-availability/network-availability";
+import { Observable } from "rxjs/Observable";
+import * as _ from "lodash";
+import { CurrentUser } from "../../models";
 
 @Injectable()
 export class DataValuesProvider {
@@ -38,7 +38,7 @@ export class DataValuesProvider {
     private sqlLite: SqlLiteProvider,
     private network: NetworkAvailabilityProvider
   ) {
-    this.resourceName = 'dataValues';
+    this.resourceName = "dataValues";
   }
 
   getDataValueSetFromServer(
@@ -49,12 +49,12 @@ export class DataValuesProvider {
     currentUser: CurrentUser
   ): Observable<any> {
     let parameter =
-      'dataSet=' + dataSetId + '&period=' + period + '&orgUnit=' + orgUnitId;
+      "dataSet=" + dataSetId + "&period=" + period + "&orgUnit=" + orgUnitId;
     let networkStatus = this.network.getNetWorkStatus();
     return new Observable(observer => {
       if (networkStatus.isAvailable) {
         this.httpClient
-          .get('/api/dataValueSets.json?' + parameter, true, currentUser)
+          .get("/api/dataValueSets.json?" + parameter, true, currentUser)
           .subscribe(
             (response: any) => {
               const dataValues = this.getFilteredDataValuesByDataSetAttributeOptionCombo(
@@ -77,7 +77,8 @@ export class DataValuesProvider {
 
   getDataValuesByStatus(
     status: string,
-    currentUser: CurrentUser
+    currentUser: CurrentUser,
+    isUploading: boolean
   ): Observable<any> {
     let attributeArray = [];
     attributeArray.push(status);
@@ -85,14 +86,25 @@ export class DataValuesProvider {
       this.sqlLite
         .getDataFromTableByAttributes(
           this.resourceName,
-          'syncStatus',
+          "syncStatus",
           attributeArray,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          isUploading
         )
         .subscribe(
           (dataValues: any) => {
-            observer.next(dataValues);
-            observer.complete();
+            if (isUploading) {
+              observer.next({
+                dataValues: dataValues.data ? dataValues.data : [],
+                dataValuesToUpload: dataValues.dataUpload
+                  ? dataValues.dataUpload
+                  : []
+              });
+              observer.complete();
+            } else {
+              observer.next(dataValues);
+              observer.complete();
+            }
           },
           error => {
             observer.error(error);
@@ -107,12 +119,12 @@ export class DataValuesProvider {
         const { de, pe, ou, co, cp, cc } = dataValue;
         let value = dataValue.value;
         let formParameter = `de=${de}&pe=${pe}&ou=${ou}&co=${co}`;
-        if (isNaN(cp) && cp != '') {
+        if (isNaN(cp) && cp != "") {
           formParameter += `&cc=${cc}&cp=${cp}`;
         }
         if (!isNaN(value)) {
-          if (new Number(value).toString() === '0') {
-            value = '';
+          if (new Number(value).toString() === "0") {
+            value = "";
           }
         }
         formParameter += `&value=${value}`;
@@ -139,7 +151,7 @@ export class DataValuesProvider {
           () => {
             let syncedDataValue = dataValues[index];
             importSummaries.success++;
-            syncedDataValue['syncStatus'] = 'synced';
+            syncedDataValue["syncStatus"] = "synced";
             syncedDataValues.push(syncedDataValue);
             if (
               formattedDataValues.length ==
@@ -203,6 +215,7 @@ export class DataValuesProvider {
     });
   }
 
+  // ToDo: Improve loading local data during data upload and during data entry form opening
   getAllEntryFormDataValuesFromStorage(
     dataSetId: string,
     period: string,
@@ -229,21 +242,22 @@ export class DataValuesProvider {
       this.sqlLite
         .getDataFromTableByAttributes(
           this.resourceName,
-          'id',
+          "id",
           ids,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (dataValues: any) => {
             dataValues.map((dataValue: any) => {
               if (
                 (dataDimension.cp === dataValue.cp ||
-                  dataValue.cp === '' ||
+                  dataValue.cp === "" ||
                   !isNaN(dataValue.cp)) &&
                 dataDimension.cc === dataValue.cc
               ) {
                 entryFormDataValuesFromStorage.push({
-                  id: dataValue.de + '-' + dataValue.co,
+                  id: dataValue.de + "-" + dataValue.co,
                   value: dataValue.value,
                   status: dataValue.syncStatus
                 });
@@ -263,9 +277,9 @@ export class DataValuesProvider {
     dataDimension: any,
     categoryOptionCombos: any
   ) {
-    let attributeOptionCombo = '';
-    if (dataDimension && dataDimension.cp && dataDimension.cp != '') {
-      let categoriesOptionsArray = dataDimension.cp.split(';');
+    let attributeOptionCombo = "";
+    if (dataDimension && dataDimension.cp && dataDimension.cp != "") {
+      let categoriesOptionsArray = dataDimension.cp.split(";");
       for (let i = 0; i < categoryOptionCombos.length; i++) {
         let hasAttributeOptionCombo = true;
         let categoryOptionCombo = categoryOptionCombos[i];
@@ -369,7 +383,7 @@ export class DataValuesProvider {
         this.sqlLite
           .deleteFromTableByAttribute(
             this.resourceName,
-            'id',
+            "id",
             dataValueId,
             currentUser.currentDatabase
           )

@@ -158,7 +158,8 @@ export class ProgramStageSectionsProvider {
             this.resource,
             'id',
             programStageSectionIds,
-            currentUser.currentDatabase
+            currentUser.currentDatabase,
+            false
           )
           .subscribe(
             (programStageSections: any) => {

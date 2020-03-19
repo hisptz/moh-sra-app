@@ -178,14 +178,17 @@ export class AboutPage implements OnInit {
       ? this.translationMapper[key]
       : key;
     this.isLoading = true;
+    console.log("CORONA NOW WE ARE READY TO DEPLOY")
     this.dataValuesProvider
-      .getDataValuesByStatus('synced', this.currentUser)
+      .getDataValuesByStatus('synced', this.currentUser, false)
       .subscribe(
         (syncedDataValues: any) => {
           this.dataValuesProvider
-            .getDataValuesByStatus('not-synced', this.currentUser)
+            .getDataValuesByStatus('not-synced', this.currentUser, false)
             .subscribe(
               (unSyncedDataValues: any) => {
+                console.log("CORONA OFFLINE::: " + JSON.stringify(unSyncedDataValues));
+                console.log("CORONA ONLINE::: " + JSON.stringify(syncedDataValues));
                 this.dataValuesStorage.offline = unSyncedDataValues.length;
                 this.dataValuesStorage.online = syncedDataValues.length;
                 this.loadingEventStatus();

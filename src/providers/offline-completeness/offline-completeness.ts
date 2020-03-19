@@ -58,12 +58,16 @@ export class OfflineCompletenessProvider {
     currentUser: CurrentUser
   ): Observable<any> {
     const tableName = 'offlineCompleteness';
+    // ToDo: Update querying strategy by limiting number of data to be queried to optimized device performance
+    // ToDo: when the number of items in the local database grow exponentially.
     return new Observable(observer => {
       const query = `SELECT * FROM ${tableName} WHERE type  = '${type}'`;
+      console.log("CAINAMIST OFFLINE COMPLETENESS QUERY::: " + query);
       this.sqlLite
         .getByUsingQuery(query, tableName, currentUser.currentDatabase)
         .subscribe(
           data => {
+            console.log("CAINAMIST OFFLINE COMPLETENESS QUERY::: " + JSON.stringify(data));
             observer.next(data);
             observer.complete();
           },
@@ -85,7 +89,8 @@ export class OfflineCompletenessProvider {
           tableName,
           'id',
           ids,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           data => {

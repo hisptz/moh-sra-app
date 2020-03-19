@@ -318,7 +318,8 @@ export class DataElementsProvider {
         this.resource,
         attributeKey,
         dataElementIds,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataElementsResponse: any) => {
           this.getDataElementsWithCategoryCombos(
@@ -351,7 +352,8 @@ export class DataElementsProvider {
         this.resource,
         attributeKey,
         dataElementIds,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataElementsResponse: any) => {
           this.getDataElementsWithCategoryCombos(

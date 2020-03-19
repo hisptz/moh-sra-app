@@ -308,7 +308,8 @@ export class StandardReportProvider {
         this.resource,
         attribute,
         [reportId],
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (reports: any) => {
           observer.next(reports[0]);
@@ -335,7 +336,8 @@ export class StandardReportProvider {
         resource,
         attribute,
         [reportId],
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (response: any) => {
           observer.next(response[0]);

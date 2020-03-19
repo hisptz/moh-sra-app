@@ -261,7 +261,8 @@ export class OrganisationUnitsProvider {
               this.resource,
               'id',
               userOrgUnitIds,
-              currentUser.currentDatabase
+              currentUser.currentDatabase,
+              false
             )
             .subscribe(
               (organisationUnits: any) => {
@@ -298,7 +299,8 @@ export class OrganisationUnitsProvider {
             this.resource,
             'id',
             organisationUnitIds,
-            currentUser.currentDatabase
+            currentUser.currentDatabase,
+            false
           )
           .subscribe(
             (organisationUnits: any) => {

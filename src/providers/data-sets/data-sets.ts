@@ -186,7 +186,8 @@ export class DataSetsProvider {
         "dataElements",
         "id",
         dataElementIds,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataElements: any) => {
           const dataElementObjects = _.map(dataElements, dataElement => {
@@ -234,7 +235,8 @@ export class DataSetsProvider {
             this.resource,
             attributeKey,
             attributeArray,
-            currentUser.currentDatabase
+            currentUser.currentDatabase,
+            false
           ).subscribe(
             (dataSets: any) => {
               if (dataSets && dataSets.length > 0) {
@@ -333,7 +335,8 @@ export class DataSetsProvider {
         this.resource,
         attributeKey,
         attributeArray,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataSets: any) => {
           if (dataSets && dataSets.length > 0) {
@@ -366,7 +369,8 @@ export class DataSetsProvider {
         resource,
         attributeKey,
         attributeArray,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataSetsSectionsResponse: any) => {
           if (dataSetsSectionsResponse && dataSetsSectionsResponse.length > 0) {
@@ -398,7 +402,8 @@ export class DataSetsProvider {
         resource,
         attributeKey,
         attributeArray,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataSetDataElementsResponse: any) => {
           if (
@@ -442,7 +447,8 @@ export class DataSetsProvider {
         resource,
         attributeKey,
         attributeArray,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (data: any) => {
           if (data && data.length > 0) {
@@ -688,7 +694,8 @@ export class DataSetsProvider {
         resource,
         "id",
         [dataSetId],
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (entryFormDesigns: any) => {
           if (entryFormDesigns && entryFormDesigns.length > 0) {
@@ -941,7 +948,8 @@ export class DataSetsProvider {
         resource,
         "dataSetId",
         [dataSetId],
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (response: any) => {
           observer.next(response);
@@ -1029,7 +1037,8 @@ export class DataSetsProvider {
         this.resource,
         attribute,
         dataSetsIds,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (dataSets: any) => {
           this.sortDataSetList(dataSets);

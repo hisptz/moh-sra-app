@@ -608,7 +608,8 @@ export class EventCaptureFormProvider {
           tableName,
           attribute,
           attributeValues,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (events: any) => {

@@ -580,6 +580,7 @@ export class DataEntryFormPage implements OnInit {
   }
 
   updateDataSetCompleteness() {
+    console.log("CAINAMIST::: COMPLETING FORM")
     this.content.scrollToBottom(1000);
     this.isDataSetCompletenessProcessRunning = true;
     const entryFormSelection = dhis2.dataEntrySelection;

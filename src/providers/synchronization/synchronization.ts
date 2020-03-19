@@ -21,19 +21,19 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Injectable } from '@angular/core';
-import { DataValuesProvider } from '../data-values/data-values';
-import { TrackerCaptureProvider } from '../tracker-capture/tracker-capture';
-import { EnrollmentsProvider } from '../enrollments/enrollments';
-import { EventCaptureFormProvider } from '../event-capture-form/event-capture-form';
-import * as _ from 'lodash';
-import { AppProvider } from '../app/app';
-import { SettingsProvider } from '../settings/settings';
-import { Observable } from 'rxjs/Observable';
-import { ProfileProvider } from '../../pages/profile/providers/profile/profile';
-import { CurrentUser } from '../../models';
-import { DataStoreManagerProvider } from '../data-store-manager/data-store-manager';
-import { DataSetCompletenessProvider } from '../data-set-completeness/data-set-completeness';
+import { Injectable } from "@angular/core";
+import { DataValuesProvider } from "../data-values/data-values";
+import { TrackerCaptureProvider } from "../tracker-capture/tracker-capture";
+import { EnrollmentsProvider } from "../enrollments/enrollments";
+import { EventCaptureFormProvider } from "../event-capture-form/event-capture-form";
+import * as _ from "lodash";
+import { AppProvider } from "../app/app";
+import { SettingsProvider } from "../settings/settings";
+import { Observable } from "rxjs/Observable";
+import { ProfileProvider } from "../../pages/profile/providers/profile/profile";
+import { CurrentUser } from "../../models";
+import { DataStoreManagerProvider } from "../data-store-manager/data-store-manager";
+import { DataSetCompletenessProvider } from "../data-set-completeness/data-set-completeness";
 
 @Injectable()
 export class SynchronizationProvider {
@@ -86,7 +86,7 @@ export class SynchronizationProvider {
         }, synchronizationSettings.time);
         if (synchronizationSettings.isAutoSync) {
           this.subscription = setInterval(() => {
-            this.getDataForUpload(currentUser).subscribe(
+            this.getDataForUpload(currentUser, true).subscribe(
               dataObject => {
                 this.uploadingDataToTheServer(
                   dataObject,
@@ -96,17 +96,17 @@ export class SynchronizationProvider {
                     const { isCompleted } = response;
                     const { importSummaries } = response;
                     if (isCompleted) {
-                      let message = '';
+                      let message = "";
                       Object.keys(importSummaries).map(key => {
                         let newKey = key.charAt(0).toUpperCase() + key.slice(1);
-                        newKey = newKey.replace(/([A-Z])/g, ' $1').trim();
+                        newKey = newKey.replace(/([A-Z])/g, " $1").trim();
                         const { success } = importSummaries[key];
                         if (success) {
-                          message += newKey + ' ' + success + ', ';
+                          message += newKey + " " + success + ", ";
                         }
                       });
-                      if (message != '') {
-                        message += 'has been successfully imported ';
+                      if (message != "") {
+                        message += "has been successfully imported ";
                         this.appProvider.setTopNotification(message);
                       }
                     }
@@ -136,13 +136,13 @@ export class SynchronizationProvider {
         return dataObject && dataObject[key] && dataObject[key].length > 0;
       });
       const response = {
-        percentage: '',
+        percentage: "",
         importSummaries: {},
         isCompleted: false
       };
       for (let item of dataItems) {
         if (dataObject[item].length > 0) {
-          if (item === 'dataValues') {
+          if (item === "dataValues") {
             let formattedDataValues = this.dataValuesProvider.getFormattedDataValueForUpload(
               dataObject[item]
             );
@@ -169,11 +169,11 @@ export class SynchronizationProvider {
                 error => {
                   observer.error(error);
                   console.log(
-                    'Error on uploading dataValues ' + JSON.stringify(error)
+                    "Error on uploading dataValues " + JSON.stringify(error)
                   );
                 }
               );
-          } else if (item === 'dataStore') {
+          } else if (item === "dataStore") {
             this.dataStoreManger
               .uploadDataStoreToTheServer(dataObject[item], currentUser)
               .subscribe(
@@ -193,11 +193,11 @@ export class SynchronizationProvider {
                 error => {
                   observer.error(error);
                   console.log(
-                    'Error on uploading events ' + JSON.stringify(error)
+                    "Error on uploading events " + JSON.stringify(error)
                   );
                 }
               );
-          } else if (item === 'events') {
+          } else if (item === "events") {
             this.eventCaptureFormProvider
               .uploadEventsToSever(dataObject[item], currentUser)
               .subscribe(
@@ -217,14 +217,14 @@ export class SynchronizationProvider {
                 error => {
                   observer.error(error);
                   console.log(
-                    'Error on uploading events ' + JSON.stringify(error)
+                    "Error on uploading events " + JSON.stringify(error)
                   );
                 }
               );
           } else if (
-            item === 'eventsForTracker' &&
-            dataObject['Enrollments'] &&
-            dataObject['Enrollments'].length === 0
+            item === "eventsForTracker" &&
+            dataObject["Enrollments"] &&
+            dataObject["Enrollments"].length === 0
           ) {
             this.eventCaptureFormProvider
               .uploadEventsToSever(dataObject[item], currentUser)
@@ -245,11 +245,11 @@ export class SynchronizationProvider {
                 error => {
                   observer.error(error);
                   console.log(
-                    'Error on uploading tracker event ' + JSON.stringify(error)
+                    "Error on uploading tracker event " + JSON.stringify(error)
                   );
                 }
               );
-          } else if (item === 'Enrollments') {
+          } else if (item === "Enrollments") {
             this.trackerCaptureProvider
               .uploadTrackedEntityInstancesToServer(
                 dataObject[item],
@@ -266,7 +266,7 @@ export class SynchronizationProvider {
                   observer.next(response);
                   this.enrollmentsProvider
                     .getSavedEnrollmentsByAttribute(
-                      'trackedEntityInstance',
+                      "trackedEntityInstance",
                       responseData.trackedEntityInstanceIds,
                       currentUser
                     )
@@ -278,7 +278,7 @@ export class SynchronizationProvider {
                             () => {
                               this.eventCaptureFormProvider
                                 .uploadEventsToSever(
-                                  dataObject['eventsForTracker'],
+                                  dataObject["eventsForTracker"],
                                   currentUser
                                 )
                                 .subscribe(
@@ -289,7 +289,7 @@ export class SynchronizationProvider {
                                       100;
                                     response.percentage = percentage.toFixed(1);
                                     response.importSummaries[
-                                      'eventsForTracker'
+                                      "eventsForTracker"
                                     ] = importSummaries;
                                     observer.next(response);
                                     if (dataItems.length === completedProcess) {
@@ -301,7 +301,7 @@ export class SynchronizationProvider {
                                   error => {
                                     observer.error(error);
                                     console.log(
-                                      'Error on uploading tracker event ' +
+                                      "Error on uploading tracker event " +
                                         JSON.stringify(error)
                                     );
                                   }
@@ -310,7 +310,7 @@ export class SynchronizationProvider {
                             error => {
                               observer.error(error);
                               console.log(
-                                'Error on uploading enrollments ' +
+                                "Error on uploading enrollments " +
                                   JSON.stringify(error)
                               );
                             }
@@ -319,7 +319,7 @@ export class SynchronizationProvider {
                       error => {
                         observer.error(error);
                         console.log(
-                          'Error on saving enrollments by attributes' +
+                          "Error on saving enrollments by attributes" +
                             JSON.stringify(error)
                         );
                       }
@@ -328,7 +328,7 @@ export class SynchronizationProvider {
                 error => {
                   observer.error(error);
                   console.log(
-                    'Error on uloading tracked entities ' +
+                    "Error on uloading tracked entities " +
                       JSON.stringify(error)
                   );
                 }
@@ -349,21 +349,26 @@ export class SynchronizationProvider {
     });
   }
 
-  getDataForUpload(currentUser): Observable<any> {
+  getDataForUpload(currentUser, isUploading: boolean): Observable<any> {
     return new Observable(observer => {
-      const status = 'not-synced';
+      const status = "not-synced";
       let dataObject = {
         events: [],
+        dataValuesToUpload: [],
         dataValues: [],
         eventsForTracker: [],
         Enrollments: [],
         dataStore: []
       };
       this.dataValuesProvider
-        .getDataValuesByStatus(status, currentUser)
+        .getDataValuesByStatus(status, currentUser, isUploading)
         .subscribe(
-          (dataValues: any) => {
-            dataObject = { ...dataObject, dataValues };
+          (dataValuesCollection: any) => {
+            dataObject = {
+              ...dataObject,
+              dataValues: dataValuesCollection.dataValues,
+              dataValuesToUpload: dataValuesCollection.dataValuesToUpload
+            };
             this.trackerCaptureProvider
               .getTrackedEntityInstanceByStatus(status, currentUser)
               .subscribe(
@@ -373,16 +378,16 @@ export class SynchronizationProvider {
                     Enrollments: trackedEntityInstances
                   };
                   this.eventCaptureFormProvider
-                    .getEventsByAttribute('syncStatus', [status], currentUser)
+                    .getEventsByAttribute("syncStatus", [status], currentUser)
                     .subscribe(
                       (events: any) => {
                         dataObject.events = _.filter(events, (event: any) => {
-                          return event.eventType === 'event-capture';
+                          return event.eventType === "event-capture";
                         });
                         dataObject.eventsForTracker = _.filter(
                           events,
                           (event: any) => {
-                            return event.eventType === 'tracker-capture';
+                            return event.eventType === "tracker-capture";
                           }
                         );
                         this.dataStoreManger
@@ -403,28 +408,28 @@ export class SynchronizationProvider {
                               observer.complete();
                             },
                             error => {
-                              console.log('error : dataStore');
+                              console.log("error : dataStore");
                               console.log(JSON.stringify(error));
                               observer.error(error);
                             }
                           );
                       },
                       error => {
-                        console.log('error : events');
+                        console.log("error : events");
                         console.log(JSON.stringify(error));
                         observer.error(error);
                       }
                     );
                 },
                 error => {
-                  console.log('error : enrollment');
+                  console.log("error : enrollment");
                   console.log(JSON.stringify(error));
                   observer.error(error);
                 }
               );
           },
           error => {
-            console.log('error : data values');
+            console.log("error : data values");
             console.log(JSON.stringify(error));
             observer.error(error);
           }
@@ -434,7 +439,7 @@ export class SynchronizationProvider {
 
   syncAllOfflineDataToServer(currentUser: CurrentUser): Observable<any> {
     return new Observable(observer => {
-      this.getDataForUpload(currentUser).subscribe(
+      this.getDataForUpload(currentUser, true).subscribe(
         dataObject => {
           this.uploadingDataToTheServer(dataObject, currentUser).subscribe(
             response => {

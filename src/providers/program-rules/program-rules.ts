@@ -474,7 +474,8 @@ export class ProgramRulesProvider {
             resource,
             'id',
             ProgramRuleActionsIds,
-            currentUser.currentDatabase
+            currentUser.currentDatabase,
+            false
           )
           .subscribe(
             programRuleActions => {

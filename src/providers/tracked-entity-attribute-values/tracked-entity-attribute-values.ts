@@ -99,7 +99,8 @@ export class TrackedEntityAttributeValuesProvider {
           this.resource,
           'trackedEntityInstance',
           trackedEntityInstanceIds,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (trackedEntityAttributeValues: any) => {

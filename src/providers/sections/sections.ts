@@ -94,7 +94,8 @@ export class SectionsProvider {
         this.resource,
         attributeKey,
         sectionIds,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (sections: any) => {
           let count = 0;
@@ -137,7 +138,8 @@ export class SectionsProvider {
         resource,
         attributeKey,
         attributeArray,
-        currentUser.currentDatabase
+        currentUser.currentDatabase,
+        false
       ).subscribe(
         (sectionDataElementsResponse: any) => {
           if (

@@ -670,7 +670,8 @@ export class ProgramsProvider {
               this.resource,
               attributeKey,
               attributeArray,
-              currentUser.currentDatabase
+              currentUser.currentDatabase,
+              false
             )
             .subscribe(
               (programsResponse: any) => {
@@ -869,7 +870,8 @@ export class ProgramsProvider {
           this.resource,
           attribute,
           attributeValue,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (programs: any) => {
@@ -933,7 +935,8 @@ export class ProgramsProvider {
           resource,
           attribute,
           attributeValue,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (programProgramStages: any) => {
@@ -963,7 +966,8 @@ export class ProgramsProvider {
           resource,
           attributeKey,
           attributeValue,
-          dataBaseName
+          dataBaseName,
+          false
         )
         .subscribe(
           (orgUnitsInProgram: any) => {
@@ -994,7 +998,8 @@ export class ProgramsProvider {
           resource,
           attributeKey,
           attributeValue,
-          dataBaseName
+          dataBaseName,
+          false
         )
         .subscribe(
           (programRulesVariablesIdsResponse: any) => {
@@ -1031,7 +1036,8 @@ export class ProgramsProvider {
           resource,
           attributeKey,
           attributeValue,
-          dataBaseName
+          dataBaseName,
+          false
         )
         .subscribe(
           (programIndicators: any) => {
@@ -1077,7 +1083,8 @@ export class ProgramsProvider {
           resource,
           attributeKey,
           attributeArray,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (programTrackedEntityAttributes: any) => {
@@ -1109,7 +1116,8 @@ export class ProgramsProvider {
           resource,
           attributeKey,
           programTrackedEntityAttributeIds,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (trackedEntityAttributes: any) => {
@@ -1134,7 +1142,8 @@ export class ProgramsProvider {
           resource,
           'id',
           [programId],
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           data => {
@@ -1161,7 +1170,8 @@ export class ProgramsProvider {
           resource,
           'id',
           [programStageId],
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           data => {
@@ -1188,7 +1198,8 @@ export class ProgramsProvider {
           resource,
           'id',
           programStageIds,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           data => {

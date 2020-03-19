@@ -106,7 +106,8 @@ export class EnrollmentsProvider {
           this.resource,
           'trackedEntityInstance',
           [trackedEntityInstance],
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (enrollments: any) => {
@@ -195,7 +196,8 @@ export class EnrollmentsProvider {
           this.resource,
           attribute,
           attributeArray,
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (enrollments: any) => {
@@ -224,7 +226,8 @@ export class EnrollmentsProvider {
           this.resource,
           'orgUnit',
           [orgUnitId],
-          currentUser.currentDatabase
+          currentUser.currentDatabase,
+          false
         )
         .subscribe(
           (enrollmentResponse: any) => {
