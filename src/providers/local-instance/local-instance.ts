@@ -125,40 +125,40 @@ export class LocalInstanceProvider {
           currentLanguage: 'en',
           progressTracker: {}
         }
-      },
+      }
       {
         id: 'default2',
         currentLanguage: 'en',
         currentUser: {
           username: '',
-          serverUrl: 'dhis.hisptz.org/dhis',
+          serverUrl: 'dhis.hisptz.org/dev/',
           password: '',
           currentLanguage: 'en',
           progressTracker: {}
         }
       },
-      {
-        id: 'default3',
-        currentLanguage: 'en',
-        currentUser: {
-          username: 'admin',
-          serverUrl: 'play.dhis2.org/demo',
-          password: 'district',
-          currentLanguage: 'en',
-          progressTracker: {}
-        }
-      },
-      {
-        id: 'default4',
-        currentLanguage: 'en',
-        currentUser: {
-          username: 'admin',
-          serverUrl: 'play.dhis2.org/2.28',
-          password: 'district',
-          currentLanguage: 'en',
-          progressTracker: {}
-        }
-      }
+      // {
+      //   id: 'default3',
+      //   currentLanguage: 'en',
+      //   currentUser: {
+      //     username: 'admin',
+      //     serverUrl: 'play.dhis2.org/demo',
+      //     password: 'district',
+      //     currentLanguage: 'en',
+      //     progressTracker: {}
+      //   }
+      // },
+      // {
+      //   id: 'default4',
+      //   currentLanguage: 'en',
+      //   currentUser: {
+      //     username: 'admin',
+      //     serverUrl: 'play.dhis2.org/2.28',
+      //     password: 'district',
+      //     currentLanguage: 'en',
+      //     progressTracker: {}
+      //   }
+      // }
     ];
   }
 
