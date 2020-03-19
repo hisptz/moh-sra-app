@@ -125,7 +125,7 @@ export class LocalInstanceProvider {
           currentLanguage: 'en',
           progressTracker: {}
         }
-      }
+      },
       {
         id: 'default2',
         currentLanguage: 'en',
@@ -136,7 +136,7 @@ export class LocalInstanceProvider {
           currentLanguage: 'en',
           progressTracker: {}
         }
-      },
+      }
       // {
       //   id: 'default3',
       //   currentLanguage: 'en',
