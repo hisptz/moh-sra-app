@@ -187,8 +187,6 @@ export class AboutPage implements OnInit {
             .getDataValuesByStatus('not-synced', this.currentUser, false)
             .subscribe(
               (unSyncedDataValues: any) => {
-                console.log("CORONA OFFLINE::: " + JSON.stringify(unSyncedDataValues));
-                console.log("CORONA ONLINE::: " + JSON.stringify(syncedDataValues));
                 this.dataValuesStorage.offline = unSyncedDataValues.length;
                 this.dataValuesStorage.online = syncedDataValues.length;
                 this.loadingEventStatus();
