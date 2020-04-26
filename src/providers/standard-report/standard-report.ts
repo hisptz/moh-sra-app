@@ -51,7 +51,7 @@ export class StandardReportProvider {
   downloadReportsFromServer(currentUser): Observable<any> {
     const fields =
       'id,name,created,type,relativePeriods,reportParams,designContent';
-    const filter = 'type:eq:HTML&filter=designContent:ilike:cordova';
+    const filter = 'type:eq:HTML&filter=designContent:ilike:cordova&filter=name:$ilike:SRA';
     const resource = 'reports';
     const url = `/api/${resource}.json?paging=false&fields=${fields}&filter=${filter}`;
     return new Observable(observer => {
@@ -209,6 +209,9 @@ export class StandardReportProvider {
         currentUser.currentDatabase
       ).subscribe(
         (reports: any) => {
+          for(const report of reports) {
+            console.log('REPORT SRA::: ' + report.name);
+          }
           reportList = _.flatMapDeep(
             _.concat(
               reportList,

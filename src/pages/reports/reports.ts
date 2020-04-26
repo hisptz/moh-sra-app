@@ -43,7 +43,7 @@ import { CurrentUser } from "../../models";
 @IonicPage()
 @Component({
   selector: "page-reports",
-  templateUrl: "reports.html"
+  templateUrl: "reports.html",
 })
 export class ReportsPage implements OnInit {
   currentUser: CurrentUser;
@@ -94,7 +94,7 @@ export class ReportsPage implements OnInit {
         this.filteringReports("standardReport");
         this.isLoading = false;
       },
-      error => {
+      (error) => {
         this.appProvider.setNormalNotification("Fail  to discover reports");
         this.isLoading = false;
       }
@@ -102,9 +102,8 @@ export class ReportsPage implements OnInit {
   }
 
   getOnlyStandardReports(stdReports: any) {
-    const STDReport = ["HWrNdR2oQIt", "iQMrTwGKfIb", "JW9mscsCfos"];
     return _.filter(stdReports, (report: any) => {
-      return _.includes(STDReport, report.id);
+      return report.name.startsWith("SRA");
     });
   }
 
@@ -115,7 +114,7 @@ export class ReportsPage implements OnInit {
       name: report.name,
       openFuturePeriods: report.openFuturePeriods,
       reportParams: report.reportParams,
-      relativePeriods: report.relativePeriods
+      relativePeriods: report.relativePeriods,
     };
     if (
       this.standardReportProvider.hasReportRequireParameterSelection(
