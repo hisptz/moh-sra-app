@@ -17,7 +17,8 @@ export function omitNONSRAMetadata(
         "programRules",
         "programStageSections",
         "programs",
-        "smsCommand"
+        "smsCommand",
+        "programRuleVariables"
     ];
     return _.filter(
         resources,

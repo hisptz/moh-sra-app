@@ -209,9 +209,6 @@ export class StandardReportProvider {
         currentUser.currentDatabase
       ).subscribe(
         (reports: any) => {
-          for(const report of reports) {
-            console.log('REPORT SRA::: ' + report.name);
-          }
           reportList = _.flatMapDeep(
             _.concat(
               reportList,
