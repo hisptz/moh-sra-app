@@ -21,11 +21,19 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, OnInit, Input } from '@angular/core';
-import { UserProvider } from '../../../../providers/user/user';
-import { ModalController } from 'ionic-angular';
-import { AppTranslationProvider } from '../../../../providers/app-translation/app-translation';
-import { SynchronizationProvider } from '../../../../providers/synchronization/synchronization';
+import { Component, OnInit, Input } from "@angular/core";
+import { UserProvider } from "../../../../providers/user/user";
+import { ModalController } from "ionic-angular";
+import { AppTranslationProvider } from "../../../../providers/app-translation/app-translation";
+import { SynchronizationProvider } from "../../../../providers/synchronization/synchronization";
+import {
+  DataUploadPayload,
+  DataValue,
+} from "../../../../models/data-value-upload-payload.model";
+import _ from "lodash";
+import { AppProvider } from "../../../../providers/app/app";
+import { LocalStorageProvider } from "../../../../providers/local-storage/local-storage";
+import { Observable } from "rxjs";
 
 /**
  * Generated class for the UploadViaInternetComponent component.
@@ -34,8 +42,8 @@ import { SynchronizationProvider } from '../../../../providers/synchronization/s
  * for more info on Angular Components.
  */
 @Component({
-  selector: 'upload-data-via-internet',
-  templateUrl: 'upload-via-internet.html'
+  selector: "upload-data-via-internet",
+  templateUrl: "upload-via-internet.html",
 })
 export class UploadViaInternetComponent implements OnInit {
   @Input() colorSettings: any;
@@ -56,10 +64,12 @@ export class UploadViaInternetComponent implements OnInit {
     private modalCtrl: ModalController,
     private user: UserProvider,
     private appTranslation: AppTranslationProvider,
-    private synchronizationProvider: SynchronizationProvider
+    private synchronizationProvider: SynchronizationProvider,
+    private appProvider: AppProvider,
+    private localStorageProvider: LocalStorageProvider
   ) {
-    this.progress = '';
-    this.success = "#42f554"
+    this.progress = "";
+    this.success = "#42f554";
     this.isLoading = true;
     this.itemsToUpload = [];
     this.dataObject = {
@@ -67,7 +77,7 @@ export class UploadViaInternetComponent implements OnInit {
       dataValues: [],
       eventsForTracker: [],
       Enrollments: [],
-      dataStore: []
+      dataStore: [],
     };
     this.importSummaries = null;
     this.translationMapper = {};
@@ -80,14 +90,14 @@ export class UploadViaInternetComponent implements OnInit {
         this.translationMapper = data;
         this.loadingCurrentUsereInfromation(this.isUploading);
       },
-      error => {
+      (error) => {
         this.loadingCurrentUsereInfromation(this.isUploading);
       }
     );
   }
 
   loadingCurrentUsereInfromation(isUploading: boolean) {
-    let key = 'Discovering current user information';
+    let key = "Discovering current user information";
     this.loadingMessage = this.translationMapper[key]
       ? this.translationMapper[key]
       : key;
@@ -96,21 +106,23 @@ export class UploadViaInternetComponent implements OnInit {
         this.currentUser = user;
         this.loadingDataToUpload(isUploading);
       },
-      error => {}
+      (error) => {}
     );
   }
 
   loadingDataToUpload(isUploading: boolean) {
-    this.synchronizationProvider.getDataForUpload(this.currentUser, isUploading).subscribe(
-      dataObject => {
-        this.dataObject = dataObject;
-        this.isLoading = false;
-      },
-      error => {
-        this.isLoading = false;
-        console.log('error : ' + JSON.stringify(error));
-      }
-    );
+    this.synchronizationProvider
+      .getDataForUpload(this.currentUser, isUploading)
+      .subscribe(
+        (dataObject) => {
+          this.dataObject = dataObject;
+          this.isLoading = false;
+        },
+        (error) => {
+          this.isLoading = false;
+          console.log("error : " + JSON.stringify(error));
+        }
+      );
   }
 
   updateItemsToUpload() {
@@ -123,24 +135,32 @@ export class UploadViaInternetComponent implements OnInit {
   }
 
   uploadData() {
-    let key = 'Uploading selected local data, please wait...';
+    let key = "Uploading selected local data, please wait...";
     this.loadingMessage = this.translationMapper[key]
       ? this.translationMapper[key]
       : key;
-    this.progress = '0';
+    this.progress = "0";
     this.isLoading = true;
     let dataToUpload = {};
-    Object.keys(this.dataObject).map(item => {
+    Object.keys(this.dataObject).map((item) => {
       if (this.itemsToUpload.indexOf(item) > -1) {
         dataToUpload[item] = this.dataObject[item];
       } else {
         dataToUpload[item] = [];
       }
     });
+
+    const mDataToUpload: DataUploadPayload = this.prepareDataValuePayload(
+      dataToUpload as DataUploadPayload
+    );
+
     this.synchronizationProvider
-      .uploadingDataToTheServer(dataToUpload, this.currentUser)
+      .uploadingDataToTheServer(
+        this.prepareDataValuePayload(dataToUpload as DataUploadPayload),
+        this.currentUser
+      )
       .subscribe(
-        response => {
+        (response) => {
           const { isCompleted } = response;
           const { importSummaries } = response;
           const { percentage } = response;
@@ -149,29 +169,60 @@ export class UploadViaInternetComponent implements OnInit {
             this.importSummaries = importSummaries;
             const keys = Object.keys(importSummaries);
             this.isLoading = false;
-            this.viewUploadImportSummaries(keys);
+            // ToDo: Improve The Approach
+            this.viewUploadImportSummaries(keys, importSummaries);
           }
         },
-        error => {
+        (error) => {
           this.isLoading = false;
           console.log(
-            'Error on uploading offline data ' + JSON.stringify(error)
+            "Error on uploading offline data " + JSON.stringify(error)
           );
         }
       );
   }
 
-  viewUploadImportSummaries(keys) {
+  prepareDataValuePayload(dataUploadPayload: DataUploadPayload) {
+    return {
+      ...dataUploadPayload,
+      // dataValues: this.removeZeroInPayload(dataUploadPayload.dataValues),
+      // dataValuesToUpload: this.removeZeroInPayload(
+      //   dataUploadPayload.dataValuesToUpload
+      // ),
+    };
+  }
+
+  removeZeroInPayload(dataValues: DataValue[]) {
+    return _.filter(dataValues, (dataValue: DataValue) => {
+      // return +dataValue.value !== 0;
+      return dataValue.value;
+    });
+  }
+
+  viewUploadImportSummaries(keys, importSummaries) {
     if (this.importSummaries) {
-      let modal = this.modalCtrl.create('ImportSummariesPage', {
-        importSummaries: this.importSummaries,
-        keys: keys
+      // ToDo: Improved Approach
+      // let modal = this.modalCtrl.create("ImportSummariesPage", {
+      //   importSummaries: this.importSummaries,
+      //   keys: keys,
+      // });
+      let modal = this.modalCtrl.create("ImportSummariesPage", {
+        importResponseSummary: this.importSummaries,
+        keys: keys,
       });
+
       modal.onDidDismiss(() => {
-        Object.keys(this.selectedItems).forEach((key: string) => {
-          this.selectedItems[key] = false;
-        });
-        this.loadingDataToUpload(this.isUploading);
+        if (
+          this.importSummaries &&
+          this.importSummaries.dataValues &&
+          !this.importSummaries.dataValues.fail
+        ) {
+          // Handle Implementation
+          Object.keys(this.selectedItems).forEach((key: string) => {
+            this.selectedItems[key] = false;
+          });
+          this.loadingDataToUpload(this.isUploading);
+        }
       });
       modal.present();
     }
@@ -179,13 +230,13 @@ export class UploadViaInternetComponent implements OnInit {
 
   getValuesToTranslate() {
     return [
-      'Aggregate data',
-      'Events',
-      'Events for tracker',
-      'Enrollments',
-      'Upload data',
-      'Discovering current user information',
-      'Uploading selected local data, please wait...'
+      "Aggregate data",
+      "Events",
+      "Events for tracker",
+      "Enrollments",
+      "Upload data",
+      "Discovering current user information",
+      "Uploading selected local data, please wait...",
     ];
   }
 }

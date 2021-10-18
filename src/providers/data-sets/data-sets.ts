@@ -72,13 +72,13 @@ export class DataSetsProvider {
   getAllDataSetsSMSCodeGeneration(currentUser: CurrentUser): Observable<any> {
     let url =
       "/api/dataSets.json?fields=id,dataSetElements[dataElement[id,categoryCombo[categoryOptionCombos[id]]]],dataElements[id,categoryCombo[categoryOptionCombos[id]]]";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.HttpClient.get(url, false, currentUser, this.resource, 25).subscribe(
         (response: any) => {
           observer.next(response[this.resource]);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -90,7 +90,7 @@ export class DataSetsProvider {
    * @param currentUser
    */
   getAllDataSets(currentUser: CurrentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getAllDataFromTable(
         this.resource,
         currentUser.currentDatabase
@@ -106,18 +106,18 @@ export class DataSetsProvider {
                 dataSets = _.concat(dataSets, {
                   id: dataSet.id,
                   name: dataSet.name,
-                  dataElements: dataElemets
+                  dataElements: dataElemets,
                 });
               });
               observer.next(dataSets);
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -129,13 +129,13 @@ export class DataSetsProvider {
    * @param currentUser
    */
   getAllDataSetElementsMapper(currentUser: CurrentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getAllDataFromTable(
         "dataSetElements",
         currentUser.currentDatabase
       ).subscribe(
         (dataSetElements: any) => {
-          dataSetElements = _.map(dataSetElements, dataSetElement => {
+          dataSetElements = _.map(dataSetElements, (dataSetElement) => {
             return { ...dataSetElement, dataSetId: dataSetElement.id };
           });
           const dataElementids = _.flattenDeep(
@@ -160,12 +160,12 @@ export class DataSetsProvider {
               observer.next(dataSetElementMapper);
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -181,7 +181,7 @@ export class DataSetsProvider {
     currentUser,
     dataElementIds: Array<string>
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         "dataElements",
         "id",
@@ -190,16 +190,16 @@ export class DataSetsProvider {
         false
       ).subscribe(
         (dataElements: any) => {
-          const dataElementObjects = _.map(dataElements, dataElement => {
+          const dataElementObjects = _.map(dataElements, (dataElement) => {
             return {
               id: dataElement.id,
-              categoryCombo: dataElement.categoryCombo
+              categoryCombo: dataElement.categoryCombo,
             };
           });
           observer.next(_.keyBy(dataElementObjects, "id"));
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -216,7 +216,7 @@ export class DataSetsProvider {
   getAssignedDataSets(orgUnitId, dataSetIds, currentUser): Observable<any> {
     let attributeKey = "id";
     let attributeArray = [];
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.getDataSetSourceDataSetIds(orgUnitId, currentUser).subscribe(
         (dataSetSourceDataSetIds: any) => {
           if (
@@ -244,7 +244,7 @@ export class DataSetsProvider {
                 let hasSelectedDataSet = false;
                 if (this.lastSelectedDataSet && this.lastSelectedDataSet.id) {
                   const matchDataSetIds = _.filter(dataSets, {
-                    id: this.lastSelectedDataSet.id
+                    id: this.lastSelectedDataSet.id,
                   });
                   if (matchDataSetIds.length > 0) {
                     hasSelectedDataSet = true;
@@ -259,12 +259,12 @@ export class DataSetsProvider {
               observer.next(dataSets);
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -285,14 +285,14 @@ export class DataSetsProvider {
         if (this.isOrganisationUnitAllowed(selectedOrgUnitId, categoryOption)) {
           categoryOptions.push({
             id: categoryOption.id,
-            name: categoryOption.name
+            name: categoryOption.name,
           });
         }
       });
       categoryComboCategories.push({
         id: category.id,
         name: category.name,
-        categoryOptions: categoryOptions
+        categoryOptions: categoryOptions,
       });
     });
     return categoryComboCategories;
@@ -312,7 +312,7 @@ export class DataSetsProvider {
     ) {
       result = false;
       const matchedOus = _.filter(categoryOption.organisationUnits, {
-        id: selectedOrgUnitId
+        id: selectedOrgUnitId,
       });
       if (matchedOus.length > 0) {
         result = true;
@@ -330,7 +330,7 @@ export class DataSetsProvider {
   getDataSetById(dataSetId, currentUser): Observable<any> {
     let attributeKey = "id";
     let attributeArray = [dataSetId];
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         this.resource,
         attributeKey,
@@ -346,7 +346,7 @@ export class DataSetsProvider {
             observer.error();
           }
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -364,7 +364,7 @@ export class DataSetsProvider {
     let attributeKey = "id";
     let attributeArray = [dataSetId];
     let sectionIds = [];
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         resource,
         attributeKey,
@@ -379,7 +379,7 @@ export class DataSetsProvider {
           observer.next(sectionIds);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -397,7 +397,7 @@ export class DataSetsProvider {
     let attributeArray = [dataSetId];
     let dataSetElements = [];
     const resource = "dataSetElements";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         resource,
         attributeKey,
@@ -415,7 +415,7 @@ export class DataSetsProvider {
               (dataElementId: any) => {
                 dataSetElements = _.concat(dataSetElements, {
                   id: dataElementId,
-                  sortOrder: counter
+                  sortOrder: counter,
                 });
                 counter++;
               }
@@ -424,7 +424,7 @@ export class DataSetsProvider {
           observer.next(dataSetElements);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -442,7 +442,7 @@ export class DataSetsProvider {
     let attributeKey = "id";
     let attributeArray = [dataSetId];
     let indicatorIds = [];
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         resource,
         attributeKey,
@@ -457,7 +457,7 @@ export class DataSetsProvider {
           observer.next(indicatorIds);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -474,12 +474,12 @@ export class DataSetsProvider {
     const { userOrgUnitIds } = currentUser;
     const dataSetMetadata = DEFAULT_APP_METADATA.dataSets;
     const { defaultIds } = dataSetMetadata;
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (userOrgUnitIds && userOrgUnitIds.length == 0) {
         observer.next(dataSetSResponse);
         observer.complete();
       } else {
-        const fields = `fields=id,name,timelyDays,formType,dataEntryForm[htmlCode],compulsoryDataElementOperands[id,name,dimensionItemType,dimensionItem],version,periodType,openFuturePeriods,expiryDays,dataSetElements[dataElement[id]],dataElements[id],organisationUnits[id],sections[id],indicators[id],categoryCombo[id,name,categoryOptionCombos[id,name,categoryOptions[id]],categories[id,name,categoryOptions[id,name,organisationUnits[id]]]]`;
+        const fields = `fields=id,name,timelyDays,formType,dataEntryForm[htmlCode],compulsoryDataElementOperands[id,name,dimensionItemType,dimensionItem],version,periodType,openFuturePeriods,expiryDays,dataSetElements[dataElement[id,attributeValues[*]]],dataElements[id,attributeValues[*]],organisationUnits[id],sections[id],indicators[id],categoryCombo[id,name,categoryOptionCombos[id,name,categoryOptions[id]],categories[id,name,categoryOptions[id,name,organisationUnits[id]]]]`;
         const filter =
           defaultIds && defaultIds.length > 0
             ? `filter=id:in:[${defaultIds.join(",")}]`
@@ -487,6 +487,8 @@ export class DataSetsProvider {
                 "&filter=organisationUnits.path:ilike:"
               )}&rootJunction=OR`;
         const url = `/api/${this.resource}.json?${fields}&${filter}`;
+
+        console.log("CAINAMIST DATASET URL::: ", JSON.stringify(url));
 
         // Chingalo's Implementation in determining page size
         // const pageSize = defaultIds && defaultIds.length > 0 ? 10 : 15;
@@ -515,7 +517,7 @@ export class DataSetsProvider {
               observer.error(e);
             }
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -554,7 +556,7 @@ export class DataSetsProvider {
    * @returns {Observable<any>}
    */
   saveDataSetsFromServer(dataSets, currentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataSets.length == 0) {
         observer.next();
         observer.complete();
@@ -573,7 +575,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -585,7 +587,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error();
           }
         );
@@ -597,7 +599,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error();
           }
         );
@@ -609,7 +611,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error();
           }
         );
@@ -621,7 +623,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error();
           }
         );
@@ -633,7 +635,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error();
           }
         );
@@ -645,7 +647,7 @@ export class DataSetsProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error();
           }
         );
@@ -654,14 +656,14 @@ export class DataSetsProvider {
   }
 
   saveDataEntryFormDesign(dataSets, currentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       let entryFormDesign = [];
       const resource = "dataSetDesign";
       dataSets.map((dataSet: any) => {
         if (dataSet.dataEntryForm && dataSet.dataEntryForm.htmlCode) {
           entryFormDesign.push({
             id: dataSet.id,
-            dataSetDesign: dataSet.dataEntryForm.htmlCode
+            dataSetDesign: dataSet.dataEntryForm.htmlCode,
           });
         }
       });
@@ -678,7 +680,7 @@ export class DataSetsProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -687,7 +689,7 @@ export class DataSetsProvider {
   }
 
   getDataEntryFormDesign(dataSetId, currentUser: CurrentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       let entryFormDesign = "";
       const resource = "dataSetDesign";
       this.SqlLite.getDataFromTableByAttributes(
@@ -704,7 +706,7 @@ export class DataSetsProvider {
           observer.next(entryFormDesign);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -726,11 +728,11 @@ export class DataSetsProvider {
           id: dataSet.id,
           indicatorIds: _.map(dataSet.indicators, (indicator: any) => {
             return indicator.id;
-          })
+          }),
         });
       }
     });
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataSetIndicators.length == 0) {
         observer.next();
         observer.complete();
@@ -744,7 +746,7 @@ export class DataSetsProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -770,11 +772,11 @@ export class DataSetsProvider {
             (organisationUnit: any) => {
               return organisationUnit.id;
             }
-          )
+          ),
         });
       }
     });
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataSetSource.length == 0) {
         observer.next();
         observer.complete();
@@ -788,7 +790,7 @@ export class DataSetsProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -807,7 +809,7 @@ export class DataSetsProvider {
     currentUser: CurrentUser
   ): Observable<any> {
     let dataSetIds = [];
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.getAllDataSetSources(currentUser).subscribe(
         (dataSetSourcesResponse: any) => {
           if (dataSetSourcesResponse && dataSetSourcesResponse.length > 0) {
@@ -824,7 +826,7 @@ export class DataSetsProvider {
           observer.next(dataSetIds);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -833,7 +835,7 @@ export class DataSetsProvider {
 
   getAllDataSetSources(currentUser: CurrentUser): Observable<any> {
     const resource = "dataSetSource";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getAllDataFromTable(
         resource,
         currentUser.currentDatabase
@@ -842,7 +844,7 @@ export class DataSetsProvider {
           observer.next(dataSetSource);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -864,11 +866,11 @@ export class DataSetsProvider {
           id: dataSet.id,
           sectionIds: _.map(dataSet.sections, (section: any) => {
             return section.id;
-          })
+          }),
         });
       }
     });
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataSetSections.length == 0) {
         observer.next();
         observer.complete();
@@ -882,7 +884,7 @@ export class DataSetsProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -916,7 +918,7 @@ export class DataSetsProvider {
         );
       }
     });
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataSetOperands.length == 0) {
         observer.next();
         observer.complete();
@@ -930,7 +932,7 @@ export class DataSetsProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -943,7 +945,7 @@ export class DataSetsProvider {
     currentUser: CurrentUser
   ): Observable<any> {
     const resource = "dataSetOperands";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         resource,
         "dataSetId",
@@ -955,7 +957,7 @@ export class DataSetsProvider {
           observer.next(response);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -980,7 +982,7 @@ export class DataSetsProvider {
             (dataSetElement: any) => {
               return dataSetElement.dataElement.id;
             }
-          )
+          ),
         });
       }
       if (dataSet.dataElements && dataSet.dataElements.length > 0) {
@@ -988,11 +990,11 @@ export class DataSetsProvider {
           id: dataSet.id,
           dataElementIds: _.map(dataSet.dataElements, (dataElement: any) => {
             return dataElement.id;
-          })
+          }),
         });
       }
     });
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataSetElements.length == 0) {
         observer.next();
         observer.complete();
@@ -1006,7 +1008,7 @@ export class DataSetsProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -1032,7 +1034,7 @@ export class DataSetsProvider {
   getDataSetsByIds(dataSetsIds, currentUser): Observable<any> {
     let attribute = "id";
     let dataSetsResponse = [];
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.SqlLite.getDataFromTableByAttributes(
         this.resource,
         attribute,
@@ -1047,12 +1049,12 @@ export class DataSetsProvider {
               id: dataSet.id,
               name: dataSet.name,
               dataElements: dataSet.dataElements,
-              dataSetElements: dataSet.dataSetElements
+              dataSetElements: dataSet.dataSetElements,
             });
           });
           observer.next(dataSetsResponse);
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );

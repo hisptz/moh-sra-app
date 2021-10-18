@@ -21,12 +21,12 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Injectable } from '@angular/core';
-import { HttpClientProvider } from '../http-client/http-client';
-import { Observable } from 'rxjs/Observable';
-import * as _ from 'lodash';
-import { CurrentUser } from '../../models';
-import { OfflineCompletenessProvider } from '../offline-completeness/offline-completeness';
+import { Injectable } from "@angular/core";
+import { HttpClientProvider } from "../http-client/http-client";
+import { Observable } from "rxjs/Observable";
+import * as _ from "lodash";
+import { CurrentUser } from "../../models";
+import { OfflineCompletenessProvider } from "../offline-completeness/offline-completeness";
 
 @Injectable()
 export class DataSetCompletenessProvider {
@@ -40,17 +40,17 @@ export class DataSetCompletenessProvider {
     dataSetCompletenessInfo: any,
     currentUser: CurrentUser
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.discoverAndUpdateEntryFormCompletenessInfo(
         entryFormSelection,
         dataSetCompletenessInfo,
         currentUser
       )
-        .then(response => {
+        .then((response) => {
           observer.next(response);
           observer.complete();
         })
-        .catch(error => {
+        .catch((error) => {
           observer.error(error);
         });
     });
@@ -61,9 +61,10 @@ export class DataSetCompletenessProvider {
     dataSetCompletenessInfo: any,
     currentUser: CurrentUser
   ) {
-    const id = this.offlineCompletenessProvider.getEntryFormConpletenessDataId(
-      entryFormSelection
-    );
+    const id =
+      this.offlineCompletenessProvider.getEntryFormConpletenessDataId(
+        entryFormSelection
+      );
     const offlineData = await this.offlineCompletenessProvider
       .getOfflineCompletenessesByIds([id], currentUser)
       .toPromise();
@@ -71,14 +72,14 @@ export class DataSetCompletenessProvider {
     if (offlineData && offlineData.length > 0) {
       const data = {
         ...offlineData[0],
-        isDeleted: JSON.parse(offlineData[0].isDeleted)
+        isDeleted: JSON.parse(offlineData[0].isDeleted),
       };
       const { completedDate, completedBy, isDeleted } = data;
       dataSetCompletenessInfo = {
         ...dataSetCompletenessInfo,
         complete: !isDeleted,
         storedBy: completedBy,
-        date: completedDate
+        date: completedDate,
       };
     } else {
       const { complete } = dataSetCompletenessInfo;
@@ -108,19 +109,22 @@ export class DataSetCompletenessProvider {
   }
 
   async uploadingDataSetCompleteness(currentUser: CurrentUser) {
-    const type = 'aggregate';
-    const status = 'not-sync';
+    const type = "aggregate";
+    const status = "not-sync";
     const offlineData = await this.offlineCompletenessProvider
       .getOfflineCompletenessesByType(type, currentUser)
       .toPromise();
-    const data = _.map(offlineData, dataObj => {
+    const data = _.map(offlineData, (dataObj) => {
       const { isDeleted } = dataObj;
       return { ...dataObj, isDeleted: JSON.parse(isDeleted) };
     });
-    const unCompletedData = _.filter(data, dataObject => dataObject.isDeleted);
+    const unCompletedData = _.filter(
+      data,
+      (dataObject) => dataObject.isDeleted
+    );
     const completedData = _.filter(
       data,
-      dataObject => !dataObject.isDeleted && dataObject.status === status
+      (dataObject) => !dataObject.isDeleted && dataObject.status === status
     );
     await this.completeEntryFormsOnline(completedData, currentUser);
     await this.unCompleteEntryFormsOnline(unCompletedData, currentUser);
@@ -137,7 +141,7 @@ export class DataSetCompletenessProvider {
         currentUser
       ).toPromise();
       await this.offlineCompletenessProvider
-        .savingOfflineCompleteness([{ ...data, status: 'synced' }], currentUser)
+        .savingOfflineCompleteness([{ ...data, status: "synced" }], currentUser)
         .toPromise();
     }
   }
@@ -147,13 +151,8 @@ export class DataSetCompletenessProvider {
     currentUser: CurrentUser
   ) {
     for (const data of unCompletedData) {
-      const {
-        dataSetId,
-        organisationUnitId,
-        periodId,
-        dataDimension,
-        id
-      } = data;
+      const { dataSetId, organisationUnitId, periodId, dataDimension, id } =
+        data;
       await this.unDoCompleteOnDataSetRegistrations(
         dataSetId,
         periodId,
@@ -180,17 +179,17 @@ export class DataSetCompletenessProvider {
       orgUnitId,
       dataDimension
     );
-    return new Observable(observer => {
+    return new Observable((observer) => {
       let data: any = {
         dataSet: dataSetId,
         period: period,
-        organisationUnit: orgUnitId
+        organisationUnit: orgUnitId,
       };
-      if (dataDimension.cp !== '') {
+      if (dataDimension.cp !== "") {
         data = {
           ...data,
           cc: dataDimension.cc,
-          cp: dataDimension.cp
+          cp: dataDimension.cp,
         };
       }
       const url = `/api/completeDataSetRegistrations?${parameter}`;
@@ -198,7 +197,7 @@ export class DataSetCompletenessProvider {
         .post(
           url,
           {
-            completeDataSetRegistrations: [data]
+            completeDataSetRegistrations: [data],
           },
           currentUser
         )
@@ -207,7 +206,7 @@ export class DataSetCompletenessProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -227,14 +226,14 @@ export class DataSetCompletenessProvider {
       orgUnitId,
       dataDimension
     );
-    return new Observable(observer => {
+    return new Observable((observer) => {
       const url = `/api/completeDataSetRegistrations?${parameter}`;
       this.httpClient.delete(url, currentUser).subscribe(
         () => {
           observer.next();
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -249,38 +248,47 @@ export class DataSetCompletenessProvider {
     currentUser: CurrentUser
   ): Observable<any> {
     let parameter = `dataSetId=${dataSetId}&periodId=${period}&organisationUnitId=${orgUnitId}`;
-    if (dataDimension.cp != '') {
+    if (dataDimension.cp != "") {
       parameter += `&cc=${dataDimension.cc}&cp=${dataDimension.cp}`;
     }
-    const url = '/dhis-web-dataentry/getDataValues.action?' + parameter;
-    return new Observable(observer => {
+    const url = "/dhis-web-dataentry/getDataValues.action?" + parameter;
+
+    console.log('CAINAMIST DATASET COMPLETENESS URL::: ' + JSON.stringify(url));
+
+    return new Observable((observer) => {
       this.httpClient.get(url, true, currentUser).subscribe(
         (response: any) => {
           if (response && response.dataValues) {
             delete response.dataValues;
           }
+
+          console.log('CAINAMIST DATASET COMPLETENESS::: ' + JSON.stringify(response));
+
           observer.next(response);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
     });
   }
+  
+
+ 
 
   getUserCompletenessInformation(
     username: string,
     currentUser: CurrentUser
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       const url = `/dhis-web-commons-ajax-json/getUser.action?username=${username}`;
       this.httpClient.get(url, true, currentUser).subscribe(
         (response: any) => {
           observer.next(response);
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -293,9 +301,9 @@ export class DataSetCompletenessProvider {
     orgUnitId: string,
     dataDimension: any
   ): string {
-    let parameter = 'ds=' + dataSetId + '&pe=' + period + '&ou=' + orgUnitId;
-    if (dataDimension.cp != '') {
-      parameter += '&cc=' + dataDimension.cc + '&cp=' + dataDimension.cp;
+    let parameter = "ds=" + dataSetId + "&pe=" + period + "&ou=" + orgUnitId;
+    if (dataDimension.cp != "") {
+      parameter += "&cc=" + dataDimension.cc + "&cp=" + dataDimension.cp;
     }
     return parameter;
   }

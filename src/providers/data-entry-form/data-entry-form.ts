@@ -21,14 +21,18 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Injectable } from '@angular/core';
-import { DataSetsProvider } from '../data-sets/data-sets';
-import { DataElementsProvider } from '../data-elements/data-elements';
-import { IndicatorsProvider } from '../indicators/indicators';
-import { SectionsProvider } from '../sections/sections';
-import { Observable } from 'rxjs/Observable';
-import { CurrentUser } from '../../models';
-import * as _ from 'lodash';
+import { Injectable } from "@angular/core";
+import { DataSetsProvider } from "../data-sets/data-sets";
+import { DataElementsProvider } from "../data-elements/data-elements";
+import { IndicatorsProvider } from "../indicators/indicators";
+import { SectionsProvider } from "../sections/sections";
+import { Observable } from "rxjs/Observable";
+import { CurrentUser } from "../../models";
+import * as _ from "lodash";
+import {
+  CompulsoryDataElementOperand,
+  CompulsoryDataValue,
+} from "../../models/compulsory-field.model";
 /*
   Generated class for the DataEntryFormProvider provider.
 
@@ -45,29 +49,64 @@ export class DataEntryFormProvider {
   ) {}
 
   getViolatedCompulsoryDataElementOperands(
-    compulsoryDataElementOperands: any[],
-    dataValuesObject: any
+    compulsoryDataElementOperands: CompulsoryDataElementOperand[],
+    dataValuesObject: { [key: string]: CompulsoryDataValue }
   ) {
-    const dataObject = {};
-    Object.keys(dataValuesObject).map(key => {
-      const dataValue = dataValuesObject[key];
-      const { value } = dataValue;
-      if (value && value !== '') {
-        dataObject[key] = dataValue;
-      }
-    });
-    const fieldsWithData = Object.keys(dataObject);
-    const violatedMandatoryFields = _.filter(
+    // const dataObject = {};
+    // Object.keys(dataValuesObject).map((key) => {
+    //   const dataValue = dataValuesObject[key];
+    //   const { value } = dataValue;
+    //   if (value && (value !== "" || value !== null)) {
+    //     dataObject[key] = dataValue;
+    //   }
+    // });
+    // const fieldsWithData = Object.keys(dataObject);
+    // const violatedMandatoryFields = _.filter(
+    //   compulsoryDataElementOperands,
+    //   (compulsoryDataElementOperand) => {
+    //     const { dimensionItem, name } = compulsoryDataElementOperand;
+    //     const status = _.indexOf(fieldsWithData, dimensionItem) === -1;
+    //     return status;
+    //   }
+    // );
+
+    const processedDataValueObject: { [key: string]: CompulsoryDataValue } =
+      _.keyBy(
+        _.map(_.keys(dataValuesObject), (key: string) => {
+          return {
+            ...dataValuesObject[key],
+            lookUp: _.trim(_.head(_.split(key, "-"))),
+          };
+        }),
+        "lookUp"
+      );
+
+    const violatedMandatoryFields: CompulsoryDataElementOperand[] = _.filter(
       compulsoryDataElementOperands,
-      compulsoryDataElementOperand => {
-        const { dimensionItem, name } = compulsoryDataElementOperand;
-        const status = _.indexOf(fieldsWithData, dimensionItem) === -1;
-        return status;
+      (compulsoryDataElementOperand: CompulsoryDataElementOperand) => {
+        const dataElementId: string =
+          compulsoryDataElementOperand &&
+          compulsoryDataElementOperand.dimensionItem &&
+          _.split(compulsoryDataElementOperand.dimensionItem, "-") &&
+          _.trim(
+            _.head(_.split(compulsoryDataElementOperand.dimensionItem, "-"))
+          )
+            ? _.trim(
+                _.head(_.split(compulsoryDataElementOperand.dimensionItem, "-"))
+              )
+            : compulsoryDataElementOperand.dimensionItem;
+
+        return (
+          !processedDataValueObject[dataElementId] ||
+          (processedDataValueObject[dataElementId] &&
+            processedDataValueObject[dataElementId].value === "")
+        );
       }
     );
+
     return {
       status: violatedMandatoryFields.length > 0,
-      violatedMandatoryFields
+      violatedMandatoryFields,
     };
   }
 
@@ -75,7 +114,7 @@ export class DataEntryFormProvider {
     dataSetId: string,
     currentUser: CurrentUser
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.dataSetProvider
         .getCompulsoryDataElementOperandsByDataSetId(dataSetId, currentUser)
         .subscribe(
@@ -86,14 +125,14 @@ export class DataEntryFormProvider {
                 const { name, dimensionItem } = compulsoryDataElementOperand;
                 return {
                   name,
-                  dimensionItem: dimensionItem.split('.').join('-')
+                  dimensionItem: dimensionItem.split(".").join("-"),
                 };
               }
             );
             observer.next(compulsoryDataElementOperands);
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -107,35 +146,35 @@ export class DataEntryFormProvider {
    * @returns {Observable<any>}
    */
   loadingDataSetInformation(dataSetId, currentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.dataSetProvider.getDataSetById(dataSetId, currentUser).subscribe(
         (dataSet: any) => {
           this.dataSetProvider
             .getDataSetSectionsIds(dataSetId, currentUser)
             .subscribe(
-              sectionIds => {
+              (sectionIds) => {
                 this.dataSetProvider
                   .getDataSetIndicatorIds(dataSetId, currentUser)
                   .subscribe(
-                    indicatorIds => {
+                    (indicatorIds) => {
                       observer.next({
                         dataSet: dataSet,
                         sectionIds: sectionIds,
-                        indicatorIds: indicatorIds
+                        indicatorIds: indicatorIds,
                       });
                       observer.complete();
                     },
-                    error => {
+                    (error) => {
                       observer.error(error);
                     }
                   );
               },
-              error => {
+              (error) => {
                 observer.error(error);
               }
             );
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -168,14 +207,14 @@ export class DataEntryFormProvider {
     appSettings,
     currentUser
   ): Observable<any> {
-    return new Observable(Observer => {
+    return new Observable((Observer) => {
       if (
         formType &&
-        formType == 'CUSTOM' &&
+        formType == "CUSTOM" &&
         appSettings &&
         appSettings.entryForm &&
         appSettings.entryForm.formLayout &&
-        appSettings.entryForm.formLayout == 'customLayout'
+        appSettings.entryForm.formLayout == "customLayout"
       ) {
         this.dataSetProvider
           .getDataEntryFormDesign(dataSetId, currentUser)
@@ -189,17 +228,17 @@ export class DataEntryFormProvider {
                 (entryFormSections: any) => {
                   const response = {
                     entryFormSections: entryFormSections,
-                    entryForm: entryForm
+                    entryForm: entryForm,
                   };
                   Observer.next(response);
                   Observer.complete();
                 },
-                error => {
+                (error) => {
                   Observer.error(error);
                 }
               );
             },
-            error => {
+            (error) => {
               Observer.error(error);
             }
           );
@@ -209,7 +248,7 @@ export class DataEntryFormProvider {
             Observer.next(entryForm);
             Observer.complete();
           },
-          error => {
+          (error) => {
             Observer.error(error);
           }
         );
@@ -219,7 +258,7 @@ export class DataEntryFormProvider {
             Observer.next(entryForm);
             Observer.complete();
           },
-          error => {
+          (error) => {
             Observer.error(error);
           }
         );
@@ -233,7 +272,7 @@ export class DataEntryFormProvider {
    * @returns {Observable<any>}
    */
   getSectionEntryForm(sectionIds, currentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sectionProvider.getSectionByIds(sectionIds, currentUser).subscribe(
         (sections: any) => {
           let count = 0;
@@ -245,7 +284,7 @@ export class DataEntryFormProvider {
               )
               .subscribe(
                 (dataElements: any) => {
-                  section['dataElements'] = dataElements;
+                  section["dataElements"] = dataElements;
                   count++;
                   if (count == sections.length) {
                     sections = this.getSortedSections(sections);
@@ -253,13 +292,13 @@ export class DataEntryFormProvider {
                     observer.complete();
                   }
                 },
-                error => {
+                (error) => {
                   observer.error(error);
                 }
               );
           });
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -286,7 +325,7 @@ export class DataEntryFormProvider {
    * @returns {Observable<any>}
    */
   getDefaultEntryForm(dataSetId, appSettings, currentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.dataSetProvider
         .getDataSetDataElements(dataSetId, currentUser)
         .subscribe(
@@ -306,12 +345,12 @@ export class DataEntryFormProvider {
                   );
                   observer.complete();
                 },
-                error => {
+                (error) => {
                   observer.error(error);
                 }
               );
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -329,9 +368,9 @@ export class DataEntryFormProvider {
     let sections = [];
     for (let index = 0; index < sectionsCounter; index++) {
       sections.push({
-        name: 'Page ' + (index + 1) + ' of ' + sectionsCounter,
+        name: "Page " + (index + 1) + " of " + sectionsCounter,
         id: index,
-        dataElements: dataElements.splice(0, maxDataElements)
+        dataElements: dataElements.splice(0, maxDataElements),
       });
     }
     return sections;

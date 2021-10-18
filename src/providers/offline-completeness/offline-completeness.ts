@@ -21,11 +21,11 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import * as _ from 'lodash';
-import { CurrentUser } from '../../models';
-import { SqlLiteProvider } from '../sql-lite/sql-lite';
+import { Injectable } from "@angular/core";
+import { Observable } from "rxjs/Observable";
+import * as _ from "lodash";
+import { CurrentUser } from "../../models";
+import { SqlLiteProvider } from "../sql-lite/sql-lite";
 
 @Injectable()
 export class OfflineCompletenessProvider {
@@ -36,17 +36,17 @@ export class OfflineCompletenessProvider {
     status: string,
     currentUser: CurrentUser
   ): Observable<any> {
-    const tableName = 'offlineCompleteness';
-    return new Observable(observer => {
+    const tableName = "offlineCompleteness";
+    return new Observable((observer) => {
       const query = `SELECT * FROM ${tableName} WHERE id = '${id}' AND status = '${status}'`;
       this.sqlLite
         .getByUsingQuery(query, tableName, currentUser.currentDatabase)
         .subscribe(
-          data => {
+          (data) => {
             observer.next(data);
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -57,21 +57,19 @@ export class OfflineCompletenessProvider {
     type: string,
     currentUser: CurrentUser
   ): Observable<any> {
-    const tableName = 'offlineCompleteness';
+    const tableName = "offlineCompleteness";
     // ToDo: Update querying strategy by limiting number of data to be queried to optimized device performance
     // ToDo: when the number of items in the local database grow exponentially.
-    return new Observable(observer => {
+    return new Observable((observer) => {
       const query = `SELECT * FROM ${tableName} WHERE type  = '${type}'`;
-      console.log("CAINAMIST OFFLINE COMPLETENESS QUERY::: " + query);
       this.sqlLite
         .getByUsingQuery(query, tableName, currentUser.currentDatabase)
         .subscribe(
-          data => {
-            console.log("CAINAMIST OFFLINE COMPLETENESS QUERY::: " + JSON.stringify(data));
+          (data) => {
             observer.next(data);
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -82,22 +80,22 @@ export class OfflineCompletenessProvider {
     ids: string[],
     currentUser: CurrentUser
   ): Observable<any> {
-    const tableName = 'offlineCompleteness';
-    return new Observable(observer => {
+    const tableName = "offlineCompleteness";
+    return new Observable((observer) => {
       this.sqlLite
         .getDataFromTableByAttributes(
           tableName,
-          'id',
+          "id",
           ids,
           currentUser.currentDatabase,
           false
         )
         .subscribe(
-          data => {
+          (data) => {
             observer.next(data);
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -108,12 +106,12 @@ export class OfflineCompletenessProvider {
     ids: string[],
     currentUser: CurrentUser
   ): Observable<any> {
-    const tableName = 'offlineCompleteness';
-    return new Observable(observer => {
+    const tableName = "offlineCompleteness";
+    return new Observable((observer) => {
       this.sqlLite
         .deleteFromTableByAttribute(
           tableName,
-          'id',
+          "id",
           ids,
           currentUser.currentDatabase
         )
@@ -122,7 +120,7 @@ export class OfflineCompletenessProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -133,8 +131,8 @@ export class OfflineCompletenessProvider {
     data: any,
     currentUser: CurrentUser
   ): Observable<any> {
-    const tableName = 'offlineCompleteness';
-    return new Observable(observer => {
+    const tableName = "offlineCompleteness";
+    return new Observable((observer) => {
       this.sqlLite
         .insertBulkDataOnTable(tableName, data, currentUser.currentDatabase)
         .subscribe(
@@ -142,7 +140,7 @@ export class OfflineCompletenessProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -155,11 +153,11 @@ export class OfflineCompletenessProvider {
   ): Observable<any> {
     const id = eventId;
     const isDeleted = false;
-    const type = 'event';
-    const status = 'not-sync';
+    const type = "event";
+    const status = "not-sync";
     const completedBy = currentUser.username;
-    const completedDate = new Date().toISOString().split('T')[0];
-    return new Observable(observer => {
+    const completedDate = new Date().toISOString().split("T")[0];
+    return new Observable((observer) => {
       this.savingOfflineCompleteness(
         [{ id, eventId, status, isDeleted, type, completedBy, completedDate }],
         currentUser
@@ -168,7 +166,7 @@ export class OfflineCompletenessProvider {
           observer.next({ completedBy, completedDate });
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -180,20 +178,20 @@ export class OfflineCompletenessProvider {
     currentUser: CurrentUser
   ): Observable<any> {
     const isDeleted = true;
-    const status = 'not-sync';
-    const completedBy = '';
-    const completedDate = '';
-    return new Observable(observer => {
+    const status = "not-sync";
+    const completedBy = "";
+    const completedDate = "";
+    return new Observable((observer) => {
       this.getOfflineCompletenessesByIds(eventIds, currentUser).subscribe(
         (data: any) => {
           if (data && data.length > 0) {
-            const comletenessData = _.map(data, dataObj => {
+            const comletenessData = _.map(data, (dataObj) => {
               return {
                 ...dataObj,
                 isDeleted,
                 status,
                 completedBy,
-                completedDate
+                completedDate,
               };
             });
             this.savingOfflineCompleteness(
@@ -204,7 +202,7 @@ export class OfflineCompletenessProvider {
                 observer.next();
                 observer.complete();
               },
-              error => {
+              (error) => {
                 observer.error(error);
               }
             );
@@ -213,7 +211,7 @@ export class OfflineCompletenessProvider {
             observer.error(message);
           }
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -225,18 +223,14 @@ export class OfflineCompletenessProvider {
     currentUser: CurrentUser,
     dataSetCompletenessInfo?: any
   ): Observable<any> {
-    const {
-      selectedOrgUnit,
-      selectedDataSet,
-      selectedPeriod,
-      dataDimension
-    } = entryFormSelection;
+    const { selectedOrgUnit, selectedDataSet, selectedPeriod, dataDimension } =
+      entryFormSelection;
     const dataSetId = selectedDataSet.id;
     const periodId = selectedPeriod.iso;
     const organisationUnitId = selectedOrgUnit.id;
     const isDeleted = false;
-    const type = 'aggregate';
-    const status = 'not-sync';
+    const type = "aggregate";
+    const status = "not-sync";
     const completedBy =
       dataSetCompletenessInfo && dataSetCompletenessInfo.storedBy
         ? dataSetCompletenessInfo.storedBy
@@ -244,9 +238,13 @@ export class OfflineCompletenessProvider {
     const completedDate =
       dataSetCompletenessInfo && dataSetCompletenessInfo.date
         ? dataSetCompletenessInfo.date
-        : new Date().toISOString().split('T')[0];
+        : new Date().toISOString().split("T")[0];
     const id = this.getEntryFormConpletenessDataId(entryFormSelection);
-    return new Observable(observer => {
+    return new Observable((observer) => {
+      console.log(
+        "MAMA NDOGO SAVING ENTRY FORM COMPLETENESS OFFLINE COMPLETENESS:::",
+        JSON.stringify("SAVING ON FORM OPENING")
+      );
       this.savingOfflineCompleteness(
         [
           {
@@ -259,8 +257,8 @@ export class OfflineCompletenessProvider {
             isDeleted,
             type,
             completedBy,
-            completedDate
-          }
+            completedDate,
+          },
         ],
         currentUser
       ).subscribe(
@@ -268,11 +266,11 @@ export class OfflineCompletenessProvider {
           observer.next({
             storedBy: completedBy,
             date: completedDate,
-            complete: true
+            complete: true,
           });
           observer.complete();
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -283,16 +281,16 @@ export class OfflineCompletenessProvider {
     entryFormSelection: any,
     currentUser: CurrentUser
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       const id = this.getEntryFormConpletenessDataId(entryFormSelection);
       this.getOfflineCompletenessesByIds([id], currentUser).subscribe(
         (data: any) => {
           if (data && data.length > 0) {
             const comletenessData = data[0];
             const isDeleted = true;
-            const status = 'not-sync';
-            const completedBy = '';
-            const completedDate = '';
+            const status = "not-sync";
+            const completedBy = "";
+            const completedDate = "";
             this.savingOfflineCompleteness(
               [
                 {
@@ -300,8 +298,8 @@ export class OfflineCompletenessProvider {
                   isDeleted,
                   status,
                   completedBy,
-                  completedDate
-                }
+                  completedDate,
+                },
               ],
               currentUser
             ).subscribe(
@@ -309,7 +307,7 @@ export class OfflineCompletenessProvider {
                 observer.next();
                 observer.complete();
               },
-              error => {
+              (error) => {
                 observer.error(error);
               }
             );
@@ -318,7 +316,7 @@ export class OfflineCompletenessProvider {
             observer.error(message);
           }
         },
-        error => {
+        (error) => {
           observer.error(error);
         }
       );
@@ -326,20 +324,16 @@ export class OfflineCompletenessProvider {
   }
 
   getEntryFormConpletenessDataId(entryFormSelection: any): string {
-    const {
-      selectedOrgUnit,
-      selectedDataSet,
-      selectedPeriod,
-      dataDimension
-    } = entryFormSelection;
+    const { selectedOrgUnit, selectedDataSet, selectedPeriod, dataDimension } =
+      entryFormSelection;
     const { cc, cp } = dataDimension;
     const dataSetId = selectedDataSet.id;
     const periodId = selectedPeriod.iso;
     const organisationUnitId = selectedOrgUnit.id;
     let idArray = [dataSetId, periodId, organisationUnitId];
-    if (cp !== '') {
+    if (cp !== "") {
       idArray = [...idArray, cc, cp];
     }
-    return idArray.join('-');
+    return idArray.join("-");
   }
 }

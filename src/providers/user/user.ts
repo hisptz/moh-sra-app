@@ -338,7 +338,7 @@ export class UserProvider {
       organisationUnits: userDataResponse.organisationUnits,
       dataViewOrganisationUnits: userDataResponse.dataViewOrganisationUnits,
       dataSets: this.getAssignedDataSetIds(userDataResponse),
-      programs: this.getAssignedProgramsId(userDataResponse)
+      programs: this.getAssignedProgramsId(userDataResponse),
     };
     return new Observable(observer => {
       this.localStorageProvider

@@ -1,0 +1,28 @@
+<!-- Generated template for the CompulsoryFieldListComponent component -->
+<div>
+  <table>
+    <tr *ngIf="currentUserInfo && currentUserInfo.name">
+      <td colspan="2" class="text-center">
+        Hello
+        <b
+          >{{ currentUserInfo && currentUserInfo.name ? currentUserInfo.name +
+          ',' : ',' }}</b
+        >
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" class="text-left">
+        Make sure the following <b>QUESTION(s)</b> are responded before
+        <b>COMPLETING</b>
+      </td>
+    </tr>
+    <tr>
+      <th class="text-center">S/N</th>
+      <th class="text-center">Question Information</th>
+    </tr>
+    <tr *ngFor="let compulsoryField of compulsoryFields; let i = index">
+      <td class="text-center">{{ i + 1 }}</td>
+      <td>{{ compulsoryField }}</td>
+    </tr>
+  </table>
+</div>

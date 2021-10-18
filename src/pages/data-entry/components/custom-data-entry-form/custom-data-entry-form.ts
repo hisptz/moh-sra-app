@@ -30,39 +30,48 @@ import {
   EventEmitter,
   Output,
   OnChanges,
-  SimpleChanges
-} from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import * as _ from 'lodash';
+  SimpleChanges,
+} from "@angular/core";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import * as _ from "lodash";
 import {
   onDataValueChange,
   onFormReady,
   updateFormFieldColor,
-  lockingEntryFormFields
-} from '../../helpers/data-entry.helper';
+  lockingEntryFormFields,
+} from "../../helpers/data-entry.helper";
 import {
   evaluateCustomFomProgramIndicators,
   evaluateCustomFomAggregateIndicators,
-  evaluateDataElementTotals
-} from '../../helpers/custom-form-indicators-helper';
+  evaluateDataElementTotals,
+} from "../../helpers/custom-form-indicators-helper";
 import {
   assignedValuesBasedOnProgramRules,
   disableHiddenFiledsBasedOnProgramRules,
-  applyErrorOrWarningActions
-} from '../../helpers/program-rules-helper';
+  applyErrorOrWarningActions,
+} from "../../helpers/program-rules-helper";
+import { LocalStorageProvider } from "../../../../providers/local-storage/local-storage";
+import { Observable } from "rxjs";
+import {
+  CurrentUserData,
+  UserRole,
+} from "../../../../models/current-user-data.model";
+import { take } from "rxjs/operators";
 
 declare var dhis2;
 
 @Component({
-  selector: 'custom-data-entry-form',
-  templateUrl: 'custom-data-entry-form.html'
+  selector: "custom-data-entry-form",
+  templateUrl: "custom-data-entry-form.html",
 })
 export class CustomDataEntryFormComponent
-  implements OnInit, AfterViewInit, OnChanges {
+  implements OnInit, AfterViewInit, OnChanges
+{
   entryFormStatusColors = {};
   @Input() dataSetReportAggregateValues: any;
   @Input() customFormProgramRules: any;
   @Input() isPeriodLocked: boolean;
+  @Input() isDataSetCompletedAndLocked: boolean;
   @Input()
   dataEntryFormDesign;
   @Input()
@@ -99,25 +108,32 @@ export class CustomDataEntryFormComponent
   onUpdateDataSetCompleteness = new EventEmitter();
   @Output() validatingEntryForm = new EventEmitter();
 
+  currentUserData$: Observable<CurrentUserData>;
+  dataSetCompleteUserRole: UserRole;
+
   _htmlMarkup: SafeHtml;
   hasScriptSet: boolean;
   scriptsContents: string[];
   entryFormSectionsCount: number;
   elementIds: any;
 
-  constructor(private sanitizer: DomSanitizer, private elementRef: ElementRef) {
+  constructor(
+    private sanitizer: DomSanitizer,
+    private elementRef: ElementRef,
+    private localStorageProvider: LocalStorageProvider
+  ) {
     this.hasScriptSet = false;
     this.entryFormSectionsCount = 1;
     this.scriptsContents = [];
     this.entryFormStatusColors = {
-      OK: '#32db64',
-      WAIT: '#fffe8c',
-      ERROR: '#ff8a8a',
-      ACTIVE: '#488aff',
-      NORMAL: '#ccc'
+      OK: "#32db64",
+      WAIT: "#fffe8c",
+      ERROR: "#ff8a8a",
+      ACTIVE: "#488aff",
+      NORMAL: "#ccc",
     };
     document.body.addEventListener(
-      'dataValueUpdate',
+      "dataValueUpdate",
       (e: CustomEvent) => {
         e.stopPropagation();
         const dataValueObject = e.detail;
@@ -127,14 +143,16 @@ export class CustomDataEntryFormComponent
       },
       false
     );
+    this.currentUserData$ =
+      this.localStorageProvider.getDataOnLocalStorage("userData");
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (
-      changes['dataUpdateStatus'] &&
-      !changes['dataUpdateStatus'].firstChange
+      changes["dataUpdateStatus"] &&
+      !changes["dataUpdateStatus"].firstChange
     ) {
-      _.each(_.keys(this.dataUpdateStatus), updateStatusKey => {
+      _.each(_.keys(this.dataUpdateStatus), (updateStatusKey) => {
         updateFormFieldColor(
           updateStatusKey,
           this.entryFormStatusColors[this.dataUpdateStatus[updateStatusKey]]
@@ -142,15 +160,15 @@ export class CustomDataEntryFormComponent
       });
     }
     if (
-      (changes['isDataSetCompleted'] &&
-        !changes['isDataSetCompleted'].firstChange) ||
-      (changes['isEventCompleted'] && !changes['isEventCompleted'].firstChange)
+      (changes["isDataSetCompleted"] &&
+        !changes["isDataSetCompleted"].firstChange) ||
+      (changes["isEventCompleted"] && !changes["isEventCompleted"].firstChange)
     ) {
       this.setFieldLockingStatus();
     }
     if (
-      changes['customFormProgramRules'] &&
-      !changes['customFormProgramRules'].firstChange
+      changes["customFormProgramRules"] &&
+      !changes["customFormProgramRules"].firstChange
     ) {
       this.applyProgramRules();
     }
@@ -167,7 +185,7 @@ export class CustomDataEntryFormComponent
         assignedFields,
         hiddenFields,
         programStageId,
-        errorOrWarningMessage
+        errorOrWarningMessage,
       } = this.customFormProgramRules;
       disableHiddenFiledsBasedOnProgramRules(
         programStageId,
@@ -195,7 +213,10 @@ export class CustomDataEntryFormComponent
 
   getLockingFieldStatus() {
     return (
-      this.isDataSetCompleted || this.isPeriodLocked || this.isEventCompleted
+      this.isDataSetCompleted ||
+      this.isPeriodLocked ||
+      this.isEventCompleted ||
+      this.isDataSetCompletedAndLocked
     );
   }
 
@@ -204,21 +225,33 @@ export class CustomDataEntryFormComponent
       this.scriptsContents = this.getScriptsContents(this.dataEntryFormDesign);
       this.dataEntryFormDesign = this.dataEntryFormDesign.replace(
         /<script[^>]*>([\w|\W]*)<\/script>/gi,
-        ''
+        ""
       );
       this._htmlMarkup = this.sanitizer.bypassSecurityTrustHtml(
         this.dataEntryFormDesign
       );
     } catch (e) {
-      console.log('ng on init ' + JSON.stringify(e));
+      console.log("ng on init " + JSON.stringify(e));
     }
+
+    this.currentUserData$
+      .pipe(take(1))
+      .subscribe((currentUserData: CurrentUserData) => {
+        if (currentUserData) {
+          this.dataSetCompleteUserRole = _.head(
+            _.filter(currentUserData.userRoles, (userRole: UserRole) => {
+              return userRole.name === "SRA_COMPLETE_SUPPORT";
+            })
+          );
+        }
+      });
   }
 
   ngAfterViewInit() {
     try {
       this.setScriptsOnHtmlContent(this.scriptsContents);
     } catch (error) {
-      console.log('ng after view int ' + JSON.stringify(error));
+      console.log("ng after view int " + JSON.stringify(error));
     } finally {
       this.setFieldLockingStatus();
     }
@@ -243,12 +276,12 @@ export class CustomDataEntryFormComponent
     const scripts =
       matchedScriptArray && matchedScriptArray.length > 0
         ? matchedScriptArray[0]
-            .replace(/<script[^>]*>/gi, ':separator:')
-            .replace(/<\/script>/gi, ':separator:')
-            .split(':separator:')
-            .filter(content => content.length > 0)
+            .replace(/<script[^>]*>/gi, ":separator:")
+            .replace(/<\/script>/gi, ":separator:")
+            .split(":separator:")
+            .filter((content) => content.length > 0)
         : [];
-    return _.filter(scripts, (scriptContent: string) => scriptContent !== '');
+    return _.filter(scripts, (scriptContent: string) => scriptContent !== "");
   }
 
   setScriptsOnHtmlContent(scriptsContentsArray) {
@@ -256,21 +289,21 @@ export class CustomDataEntryFormComponent
       ? _.flattenDeep(
           _.map(
             this.entryFormSections,
-            entrySection => entrySection.dataElements
+            (entrySection) => entrySection.dataElements
           )
         )
       : this.programTrackedEntityAttributes
       ? _.flattenDeep(
           _.map(
             this.programTrackedEntityAttributes,
-            programTrackedEntityAttribute =>
+            (programTrackedEntityAttribute) =>
               programTrackedEntityAttribute.trackedEntityAttribute
           )
         )
       : _.flattenDeep(
           _.map(
             this.programStageDataElements,
-            programStage => programStage.dataElement
+            (programStage) => programStage.dataElement
           )
         );
     if (!this.hasScriptSet) {
@@ -284,7 +317,7 @@ export class CustomDataEntryFormComponent
         this.dataSetReportAggregateValues,
         this.entryFormStatusColors,
         scriptsContentsArray,
-        function(
+        function (
           entryFormType,
           entryFormStatusColors,
           programIndicators,
@@ -292,8 +325,8 @@ export class CustomDataEntryFormComponent
         ) {
           // Listen for change event
           document.addEventListener(
-            'change',
-            function(event: any) {
+            "change",
+            function (event: any) {
               // If the clicked element doesn't have the right selector, bail
               try {
                 if (
@@ -301,7 +334,7 @@ export class CustomDataEntryFormComponent
                   event.target &&
                   event.target.matches &&
                   event.target.matches(
-                    '.entryfield, .entryselect, .entrytrueonly, .entryfileresource, .entryfield-radio'
+                    ".entryfield, .entryselect, .entrytrueonly, .entryfileresource, .entryfield-radio"
                   )
                 ) {
                   onDataValueChange(
@@ -311,11 +344,11 @@ export class CustomDataEntryFormComponent
                   );
                 }
               } catch (error) {
-                console.log({ error, type: 'Event on change' });
+                console.log({ error, type: "Event on change" });
               }
-              if (entryFormType === 'event') {
+              if (entryFormType === "event") {
                 evaluateCustomFomProgramIndicators(programIndicators);
-              } else if (entryFormType === 'aggregate') {
+              } else if (entryFormType === "aggregate") {
                 evaluateCustomFomAggregateIndicators(indicators);
                 evaluateDataElementTotals();
               }
@@ -326,9 +359,9 @@ export class CustomDataEntryFormComponent
 
           // Embed inline javascripts
           const scriptsContents = `
-          try {${scriptsContentsArray.join('')}} catch(e) { console.log(e);}`;
-          const script = document.createElement('script');
-          script.type = 'text/javascript';
+          try {${scriptsContentsArray.join("")}} catch(e) { console.log(e);}`;
+          const script = document.createElement("script");
+          script.type = "text/javascript";
           script.innerHTML = scriptsContents;
           document
             .getElementById(`_custom_entry_form_${entryFormType}`)
@@ -339,11 +372,11 @@ export class CustomDataEntryFormComponent
   }
 
   getScriptUrl(scriptsContents) {
-    let url = '';
-    if (scriptsContents && scriptsContents.split('<script').length > 0) {
-      scriptsContents.split('<script').forEach((scriptsContent: any) => {
-        if (scriptsContent != '') {
-          url = scriptsContent.split('src=')[1].split('>')[0];
+    let url = "";
+    if (scriptsContents && scriptsContents.split("<script").length > 0) {
+      scriptsContents.split("<script").forEach((scriptsContent: any) => {
+        if (scriptsContent != "") {
+          url = scriptsContent.split("src=")[1].split(">")[0];
         }
       });
     }

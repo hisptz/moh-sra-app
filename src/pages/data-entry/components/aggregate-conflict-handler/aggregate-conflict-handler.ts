@@ -114,6 +114,10 @@ export class AggregateConflictHandlerComponent implements OnInit {
                     )
                     .subscribe(
                       dataValues => {
+                        this.updateSummaryObject(
+                          dataValues,
+                          this.dataValuesObject
+                        );
                         key = 'Discovering entry form completeness information';
                         this.loadingMessage = this.translationMapper[key]
                           ? this.translationMapper[key]
@@ -131,6 +135,8 @@ export class AggregateConflictHandlerComponent implements OnInit {
                               this.dataSetCompletenessInfoAction.emit(
                                 dataSetCompletenessInfo
                               );
+                              console.log('CAINAMIST DATASET COMPLETENESS URL::: ' + JSON.stringify(dataSetCompletenessInfo));
+
                               this.isLoading = false;
                               if (this.dataValuesObject) {
                                 this.updateSummaryObject(
@@ -141,9 +147,10 @@ export class AggregateConflictHandlerComponent implements OnInit {
                             },
                             error => {
                               this.isLoading = false;
-                              this.appProvider.setNormalNotification(
-                                'Failed to discover entry form completeness information'
-                              );
+                              // ToDo: Improve The Approach 
+                              // this.appProvider.setNormalNotification(
+                              //   'Failed to discover entry form completeness information'
+                              // );
                             }
                           );
                       },

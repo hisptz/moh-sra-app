@@ -1,3 +1,24 @@
 page-import-summaries {
+  .response {
+    border: 1px solid #ddd;
+    padding: 5px;
+    color: green;
+    border-radius: 2px;
+  }
 
+  th {
+      background-color: #eee;
+  }
+
+  .success {
+    background-color: green;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .failure {
+    background-color: red;
+    color: #fff;
+    font-weight: bold;
+  }
 }

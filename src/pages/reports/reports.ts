@@ -33,6 +33,7 @@ import { Store } from "@ngrx/store";
 import { State, getCurrentUserColorSettings } from "../../store";
 import { Observable } from "rxjs";
 import { CurrentUser } from "../../models";
+import { ReportConfig, ReportParams } from "../../models/report-config.model";
 /**
  * Generated class for the ReportsPage page.
  *
@@ -107,18 +108,28 @@ export class ReportsPage implements OnInit {
     });
   }
 
+  getReportParamTransformer(reportParams: ReportParams) {
+    return {
+      paramGrandParentOrganisationUnit: false,
+      paramReportingPeriod: true,
+      paramOrganisationUnit: true,
+      paramParentOrganisationUnit: false,
+    };
+  }
+
   selectReport(report) {
     const parameter = {
       id: report.id,
       reportType: report.type,
       name: report.name,
       openFuturePeriods: report.openFuturePeriods,
-      reportParams: report.reportParams,
+      reportParams: this.getReportParamTransformer(report.reportParams),
       relativePeriods: report.relativePeriods,
     };
+
     if (
       this.standardReportProvider.hasReportRequireParameterSelection(
-        report.reportParams
+        this.getReportParamTransformer(report.reportParams)
       )
     ) {
       this.navCtrl.push("ReportParameterSelectionPage", parameter);

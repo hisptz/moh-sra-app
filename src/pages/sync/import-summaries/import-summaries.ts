@@ -50,15 +50,17 @@ export class ImportSummariesPage implements OnInit {
     public navParams: NavParams
   ) {
     this.colorSettings$ = this.store.select(getCurrentUserColorSettings);
+    this.importSummaries = this.navParams.get('importResponseSummary');
   }
 
   ngOnInit() {
-    this.importSummaries = this.navParams.get('importSummaries');
+    this.importSummaries = this.navParams.get('importResponseSummary');
     this.keys = this.navParams.get('keys');
     console.log(
       JSON.stringify({ keys: this.keys, importSummaries: this.importSummaries })
     );
   }
+
 
   dismiss() {
     this.viewCtrl.dismiss({});

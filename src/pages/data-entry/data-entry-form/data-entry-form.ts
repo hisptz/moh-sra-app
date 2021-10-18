@@ -21,38 +21,59 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from "@angular/core";
 import {
   IonicPage,
   ModalController,
   NavController,
   NavParams,
-  Content
-} from 'ionic-angular';
-import { UserProvider } from '../../../providers/user/user';
-import { AppProvider } from '../../../providers/app/app';
-import { DataEntryFormProvider } from '../../../providers/data-entry-form/data-entry-form';
-import { SettingsProvider } from '../../../providers/settings/settings';
-import { DataValuesProvider } from '../../../providers/data-values/data-values';
-import { DataSetCompletenessProvider } from '../../../providers/data-set-completeness/data-set-completeness';
-import * as _ from 'lodash';
-import { Store } from '@ngrx/store';
-import { State, getCurrentUserColorSettings } from '../../../store';
-import { Observable } from 'rxjs';
-import { SynchronizationProvider } from '../../../providers/synchronization/synchronization';
-import { ValidationRule, CurrentUser } from '../../../models';
-import { ValidationRulesProvider } from '../../../providers/validation-rules/validation-rules';
-import { OfflineCompletenessProvider } from '../../../providers/offline-completeness/offline-completeness';
+  Content,
+} from "ionic-angular";
+import { UserProvider } from "../../../providers/user/user";
+import { AppProvider } from "../../../providers/app/app";
+import { DataEntryFormProvider } from "../../../providers/data-entry-form/data-entry-form";
+import { SettingsProvider } from "../../../providers/settings/settings";
+import { DataValuesProvider } from "../../../providers/data-values/data-values";
+import { DataSetCompletenessProvider } from "../../../providers/data-set-completeness/data-set-completeness";
+import * as _ from "lodash";
+import { Store } from "@ngrx/store";
+import { State, getCurrentUserColorSettings } from "../../../store";
+import { Observable, Subscription } from "rxjs";
+import { SynchronizationProvider } from "../../../providers/synchronization/synchronization";
+import { ValidationRule, CurrentUser } from "../../../models";
+import { ValidationRulesProvider } from "../../../providers/validation-rules/validation-rules";
+import { OfflineCompletenessProvider } from "../../../providers/offline-completeness/offline-completeness";
+import { CompulsoryNotificationPage } from "../../compulsory-notification/compulsory-notification";
+import {
+  OfflineCompleteDataValuePayload,
+  OfflineSQLITEDataValue,
+  SQLITEDataValue,
+} from "../../../models/data-value.model";
+import { getStandardDataValuePayload } from "../../../helpers/srt-data-value-payload.helper";
+import { take } from "rxjs/operators";
+import {
+  CompletenessConfiguration,
+  CompletenessPayload,
+  CompletenessResponse,
+  DataSetCompletenessInfo,
+  EntryFormParameter,
+  ShortImportSummary,
+} from "../../../models/completeness.model";
+import {
+  ImportResponse,
+  ImportSummary,
+} from "../../../models/import-response.model";
+import { NetworkAvailabilityProvider } from "../../../providers/network-availability/network-availability";
 
 declare var dhis2;
 
 @IonicPage()
 @Component({
-  selector: 'page-data-entry-form',
-  templateUrl: 'data-entry-form.html'
+  selector: "page-data-entry-form",
+  templateUrl: "data-entry-form.html",
 })
 export class DataEntryFormPage implements OnInit {
-  entryFormParameter: any;
+  entryFormParameter: EntryFormParameter;
 
   isLoading: boolean;
   loadingMessage: string;
@@ -82,6 +103,11 @@ export class DataEntryFormPage implements OnInit {
   content: Content;
   colorSettings$: Observable<any>;
   isPeriodLocked: boolean;
+  isDataSetCompletedAndLocked: boolean;
+
+  // Subscriptions
+  subscriptions: Subscription[] = [];
+  completenessSubscription$: Subscription;
 
   constructor(
     private store: Store<State>,
@@ -96,15 +122,16 @@ export class DataEntryFormPage implements OnInit {
     private navParams: NavParams,
     private synchronizationProvider: SynchronizationProvider,
     private validationRulesProvider: ValidationRulesProvider,
-    private offlineCompletenessProvider: OfflineCompletenessProvider
+    private offlineCompletenessProvider: OfflineCompletenessProvider,
+    private networkAvailabilityProvider: NetworkAvailabilityProvider
   ) {
     this.colorSettings$ = this.store.select(getCurrentUserColorSettings);
-    this.dataEntryFormDesign = '';
-    this.entryFormType = 'SECTION';
-    this.icons['menu'] = 'assets/icon/menu.png';
+    this.dataEntryFormDesign = "";
+    this.entryFormType = "SECTION";
+    this.icons["menu"] = "assets/icon/menu.png";
     this.storageStatus = {
       online: 0,
-      offline: 0
+      offline: 0,
     };
     this.dataSetsCompletenessInfo = {};
     this.isDataSetCompleted = false;
@@ -118,11 +145,11 @@ export class DataEntryFormPage implements OnInit {
   }
 
   ngOnInit() {
-    this.loadingMessage = 'Discovering current user information';
-    this.entryFormParameter = this.navParams.get('parameter');
+    this.loadingMessage = "Discovering current user information";
+    this.entryFormParameter = this.navParams.get("parameter");
     this.isPeriodLocked = this.entryFormParameter.isPeriodLocked;
     this.userProvider.getCurrentUser().subscribe(
-      user => {
+      (user) => {
         this.currentUser = user;
         this.settingsProvider
           .getSettingsForTheApp(user)
@@ -135,18 +162,44 @@ export class DataEntryFormPage implements OnInit {
             ) {
               this.entryFormLayout = appSettings.entryForm.formLayout;
             } else {
-              this.entryFormLayout = 'listLayout';
+              this.entryFormLayout = "listLayout";
             }
             this.discoveringDataSetInformation(
               this.entryFormParameter.dataSet.id
             );
+
+            this.dataSetCompletenessProvider
+              .getDataSetCompletenessInfo(
+                this.entryFormParameter.dataSet.id,
+                this.entryFormParameter.period.name,
+                this.entryFormParameter.orgUnit.id,
+                this.entryFormParameter.dataDimension,
+                this.currentUser
+              )
+              .subscribe(
+                (completenessConfiguration: CompletenessConfiguration) => {
+                  if (completenessConfiguration) {
+                    console.log(
+                      "CAINAMIST::: ",
+                      JSON.stringify(completenessConfiguration)
+                    );
+                    this.isDataSetCompletedAndLocked =
+                      completenessConfiguration &&
+                      completenessConfiguration.complete
+                        ? completenessConfiguration.complete
+                        : false;
+                  } else {
+                    this.isDataSetCompletedAndLocked = false;
+                  }
+                }
+              );
           });
       },
-      error => {
+      (error) => {
         console.log(JSON.stringify(error));
         this.isLoading = false;
         this.appProvider.setNormalNotification(
-          'Failed to discover current user information'
+          "Failed to discover current user information"
         );
       }
     );
@@ -157,14 +210,14 @@ export class DataEntryFormPage implements OnInit {
   }
 
   discoveringDataSetInformation(dataSetId) {
-    this.loadingMessage = 'Discovering entry form information';
+    this.loadingMessage = "Discovering entry form information";
     this.dataEntryFormProvider
       .loadingDataSetInformation(dataSetId, this.currentUser)
       .subscribe(
         (dataSetInformation: any) => {
           this.dataSet = dataSetInformation.dataSet;
           this.sectionIds = dataSetInformation.sectionIds;
-          this.loadingMessage = 'Discovering indicators';
+          this.loadingMessage = "Discovering indicators";
           this.dataEntryFormProvider
             .getEntryFormIndicators(
               dataSetInformation.indicatorIds,
@@ -175,27 +228,27 @@ export class DataEntryFormPage implements OnInit {
                 this.indicators = indicators;
                 this.discoveringEntryForm(this.dataSet, this.sectionIds);
               },
-              error => {
+              (error) => {
                 this.isLoading = false;
-                this.loadingMessage = '';
+                this.loadingMessage = "";
                 this.appProvider.setNormalNotification(
-                  'Failed to discover indicators'
+                  "Failed to discover indicators"
                 );
               }
             );
         },
-        error => {
+        (error) => {
           this.isLoading = false;
-          this.loadingMessage = '';
+          this.loadingMessage = "";
           this.appProvider.setNormalNotification(
-            'Failed to discover entry form information'
+            "Failed to discover entry form information"
           );
         }
       );
   }
 
   discoveringEntryForm(dataSet, sectionIds) {
-    this.loadingMessage = 'Preparing entry form';
+    this.loadingMessage = "Preparing entry form";
     this.dataEntryFormProvider
       .getEntryForm(
         sectionIds,
@@ -207,38 +260,40 @@ export class DataEntryFormPage implements OnInit {
       .subscribe(
         (entryFormResponse: any) => {
           if (
-            dataSet.formType == 'CUSTOM' &&
+            dataSet.formType == "CUSTOM" &&
             this.appSettings &&
             this.appSettings.entryForm &&
             this.appSettings.entryForm.formLayout &&
-            this.appSettings.entryForm.formLayout == 'customLayout'
+            this.appSettings.entryForm.formLayout == "customLayout"
           ) {
             this.dataEntryFormDesign = entryFormResponse.entryForm;
             this.entryFormSections = entryFormResponse.entryFormSections;
-            this.entryFormType = 'CUSTOM';
+            this.entryFormType = "CUSTOM";
           } else {
             this.entryFormSections = entryFormResponse;
-            this.pager['page'] = 1;
-            this.pager['total'] = entryFormResponse.length;
-            this.entryFormType = 'SECTION';
+            this.pager["page"] = 1;
+            this.pager["total"] = entryFormResponse.length;
+            this.entryFormType = "SECTION";
           }
           let dataSetId = this.dataSet.id;
           let period = this.entryFormParameter.period.iso;
           let orgUnitId = this.entryFormParameter.orgUnit.id;
           let dataDimension = this.entryFormParameter.dataDimension;
-          this.dataSetAttributeOptionCombo = this.dataValuesProvider.getDataValuesSetAttributeOptionCombo(
-            dataDimension,
-            this.dataSet.categoryCombo.categoryOptionCombos
-          );
-          this.loadingMessage = 'Discovering mandatory fields';
+          this.dataSetAttributeOptionCombo =
+            this.dataValuesProvider.getDataValuesSetAttributeOptionCombo(
+              dataDimension,
+              this.dataSet.categoryCombo.categoryOptionCombos
+            );
+          this.loadingMessage = "Discovering mandatory fields";
           this.dataEntryFormProvider
             .getCompulsoryDataElementOperandsByDataSetId(
               dataSetId,
               this.currentUser
             )
             .subscribe(
-              compulsoryDataElementOperands => {
-                this.compulsoryDataElementOperands = compulsoryDataElementOperands;
+              (compulsoryDataElementOperands) => {
+                this.compulsoryDataElementOperands =
+                  compulsoryDataElementOperands;
                 this.discoveringData(
                   dataSetId,
                   period,
@@ -246,27 +301,27 @@ export class DataEntryFormPage implements OnInit {
                   dataDimension
                 );
               },
-              error => {
+              (error) => {
                 console.log(JSON.stringify(error));
                 this.isLoading = false;
-                this.loadingMessage = '';
+                this.loadingMessage = "";
                 this.appProvider.setNormalNotification(
-                  'Fail to dicover mandatory fields'
+                  "Fail to dicover mandatory fields"
                 );
               }
             );
         },
-        error => {
+        (error) => {
           console.log(JSON.stringify(error));
           this.isLoading = false;
-          this.loadingMessage = '';
-          this.appProvider.setNormalNotification('Fail to prepare entry form');
+          this.loadingMessage = "";
+          this.appProvider.setNormalNotification("Fail to prepare entry form");
         }
       );
   }
 
   discoveringData(dataSetId, period, orgUnitId, dataDimension) {
-    this.loadingMessage = 'Discovering available local data';
+    this.loadingMessage = "Discovering available local data";
     this.dataValuesProvider
       .getAllEntryFormDataValuesFromStorage(
         dataSetId,
@@ -280,7 +335,7 @@ export class DataEntryFormPage implements OnInit {
         (entryFormDataValues: any) => {
           entryFormDataValues.map((dataValue: any) => {
             this.dataValuesObject[dataValue.id] = dataValue;
-            dataValue.status == 'synced'
+            dataValue.status == "synced"
               ? this.storageStatus.online++
               : this.storageStatus.offline++;
           });
@@ -289,10 +344,10 @@ export class DataEntryFormPage implements OnInit {
             this.currentUser
           );
         },
-        error => {
+        (error) => {
           this.isLoading = false;
           this.appProvider.setNormalNotification(
-            'Failed to discover available local data'
+            "Failed to discover available local data"
           );
         }
       );
@@ -312,10 +367,10 @@ export class DataEntryFormPage implements OnInit {
           this.validationRules = validationRules;
           this.isLoading = false;
         },
-        error => {
+        (error) => {
           this.isLoading = false;
           this.appProvider.setNormalNotification(
-            'Failed to discover available local data'
+            "Failed to discover available local data"
           );
         }
       );
@@ -330,16 +385,16 @@ export class DataEntryFormPage implements OnInit {
       )
       .subscribe(
         (violatedValidationRule: any) => {
-          let modal = this.modalCtrl.create('ValidationRulesResultsPage', {
-            violatedValidationRule
+          let modal = this.modalCtrl.create("ValidationRulesResultsPage", {
+            violatedValidationRule,
           });
           modal.present();
           this.isValidationProcessRunning = false;
         },
-        error => {
+        (error) => {
           this.isValidationProcessRunning = false;
           this.appProvider.setNormalNotification(
-            'Failed to evaluate validation rules'
+            "Failed to evaluate validation rules"
           );
         }
       );
@@ -353,7 +408,7 @@ export class DataEntryFormPage implements OnInit {
         dataSetCompletenessInfo,
         this.currentUser
       )
-      .subscribe(dataSetCompleteness => {
+      .subscribe((dataSetCompleteness) => {
         this.dataSetsCompletenessInfo = dataSetCompleteness;
         if (dataSetCompleteness && dataSetCompleteness.complete) {
           this.isDataSetCompleted = true;
@@ -363,16 +418,16 @@ export class DataEntryFormPage implements OnInit {
 
   onMergingWithOnlineData(data: any) {
     const { dataValues, action } = data;
-    if (action === 'decline') {
-      Object.keys(this.dataValuesObject).map(id => {
+    if (action === "decline") {
+      Object.keys(this.dataValuesObject).map((id) => {
         const dataValue = this.dataValuesObject[id];
-        dataValues.push({ ...dataValue, status: 'synced' });
+        dataValues.push({ ...dataValue, status: "synced" });
       });
-      this.appProvider.setTopNotification('Uploading offline data');
+      this.appProvider.setTopNotification("Uploading offline data");
       this.synchronizationProvider
         .syncAllOfflineDataToServer(this.currentUser)
         .subscribe(
-          response => {
+          (response) => {
             const percentage =
               response && response.percentage
                 ? parseInt(response.percentage)
@@ -382,17 +437,17 @@ export class DataEntryFormPage implements OnInit {
               const { fail } = importSummaries.dataValues;
               if (fail == 0 && percentage === 100) {
                 this.appProvider.setTopNotification(
-                  'Offline data has been uploaded successfully'
+                  "Offline data has been uploaded successfully"
                 );
                 this.savingDataValuesAfterResolvingConflicts(dataValues);
               } else {
                 this.appProvider.setTopNotification(
-                  'Failed to upload offline data'
+                  "Failed to upload offline data"
                 );
               }
             }
           },
-          error => {
+          (error) => {
             console.log(JSON.stringify({ error }));
           }
         );
@@ -403,23 +458,23 @@ export class DataEntryFormPage implements OnInit {
 
   savingDataValuesAfterResolvingConflicts(dataValues: any[]) {
     this.isLoading = true;
-    this.loadingMessage = '';
+    this.loadingMessage = "";
     let newDataValue = [];
     const dataSetId = this.dataSet.id;
     const period = this.entryFormParameter.period.iso;
     const orgUnitId = this.entryFormParameter.orgUnit.id;
     const orgUnitName = this.entryFormParameter.orgUnit.name;
     const dataDimension = this.entryFormParameter.dataDimension;
-    const status = 'synced';
-    _.map(dataValues, dataValue => {
+    const status = "synced";
+    _.map(dataValues, (dataValue) => {
       const dataValueId = dataValue.id;
-      const fieldIdArray = dataValueId.split('-');
+      const fieldIdArray = dataValueId.split("-");
       newDataValue.push({
         orgUnit: orgUnitName,
         dataElement: fieldIdArray[0],
         categoryOptionCombo: fieldIdArray[1],
         value: dataValue.value,
-        period: this.entryFormParameter.period.name
+        period: this.entryFormParameter.period.name,
       });
       this.dataValuesObject[dataValueId] = dataValue;
     });
@@ -435,16 +490,16 @@ export class DataEntryFormPage implements OnInit {
       )
       .subscribe(
         () => {
-          _.map(dataValues, dataValue => {
+          _.map(dataValues, (dataValue) => {
             this.dataValuesSavingStatusClass[dataValue.id] =
-              'input-field-container-success';
+              "input-field-container-success";
             this.dataValuesObject[dataValue.id] = dataValue;
           });
           this.storageStatus.offline = 0;
           this.storageStatus.online = 0;
-          _.map(_.keys(this.dataValuesObject), key => {
+          _.map(_.keys(this.dataValuesObject), (key) => {
             const dataValue = this.dataValuesObject[key];
-            if (dataValue.status === 'synced') {
+            if (dataValue.status === "synced") {
               this.storageStatus.online += 1;
             } else {
               this.storageStatus.offline += 1;
@@ -452,7 +507,7 @@ export class DataEntryFormPage implements OnInit {
           });
           this.isLoading = false;
         },
-        error => {
+        (error) => {
           this.isLoading = false;
         }
       );
@@ -465,9 +520,9 @@ export class DataEntryFormPage implements OnInit {
   }
 
   openSectionList() {
-    let modal = this.modalCtrl.create('DataEntrySectionSelectionPage', {
+    let modal = this.modalCtrl.create("DataEntrySectionSelectionPage", {
       pager: this.pager,
-      sections: this.getEntryFormSections(this.entryFormSections)
+      sections: this.getEntryFormSections(this.entryFormSections),
     });
     modal.onDidDismiss((pager: any) => {
       if (pager && pager.page) {
@@ -482,25 +537,25 @@ export class DataEntryFormPage implements OnInit {
     let username =
       dataSetsCompletenessInfo && dataSetsCompletenessInfo.storedBy
         ? dataSetsCompletenessInfo.storedBy
-        : '';
-    let modal = this.modalCtrl.create('EntryFormCompletenessPage', {
+        : "";
+    let modal = this.modalCtrl.create("EntryFormCompletenessPage", {
       username: username,
-      currentUser: this.currentUser
+      currentUser: this.currentUser,
     });
     modal.present();
   }
 
   viewEntryFormIndicators(indicators) {
     if (indicators && indicators.length > 0) {
-      let modal = this.modalCtrl.create('DataEntryIndicatorsPage', {
+      let modal = this.modalCtrl.create("DataEntryIndicatorsPage", {
         indicators: indicators,
         dataValuesObject: this.dataValuesObject,
-        dataSet: { id: this.dataSet.id, name: this.dataSet.name }
+        dataSet: { id: this.dataSet.id, name: this.dataSet.name },
       });
       modal.onDidDismiss(() => {});
       modal.present();
     } else {
-      this.appProvider.setNormalNotification('There are no indicators to view');
+      this.appProvider.setNormalNotification("There are no indicators to view");
     }
   }
 
@@ -522,13 +577,13 @@ export class DataEntryFormPage implements OnInit {
     let orgUnitName = this.entryFormParameter.orgUnit.name;
     let dataDimension = this.entryFormParameter.dataDimension;
     let newDataValue = [];
-    let fieldIdArray = dataValueId.split('-');
+    let fieldIdArray = dataValueId.split("-");
     newDataValue.push({
       orgUnit: orgUnitName,
       dataElement: fieldIdArray[0],
       categoryOptionCombo: fieldIdArray[1],
       value: updateDataValue.value,
-      period: this.entryFormParameter.period.name
+      period: this.entryFormParameter.period.name,
     });
     this.dataValuesProvider
       .saveDataValues(
@@ -544,7 +599,7 @@ export class DataEntryFormPage implements OnInit {
         () => {
           if (
             this.dataValuesObject[dataValueId] &&
-            this.dataValuesObject[dataValueId].status == 'synced'
+            this.dataValuesObject[dataValueId].status == "synced"
           ) {
             this.storageStatus.online--;
             this.storageStatus.offline++;
@@ -552,18 +607,18 @@ export class DataEntryFormPage implements OnInit {
             this.storageStatus.offline++;
           }
           this.dataValuesSavingStatusClass[dataValueId] =
-            'input-field-container-success';
+            "input-field-container-success";
           this.dataValuesObject[dataValueId] = updateDataValue;
 
           // Update dataValue update status
-          this.dataUpdateStatus = { [updateDataValue.domElementId]: 'OK' };
+          this.dataUpdateStatus = { [updateDataValue.domElementId]: "OK" };
         },
-        error => {
+        (error) => {
           this.dataValuesSavingStatusClass[dataValueId] =
-            'input-field-container-failed';
+            "input-field-container-failed";
 
           // Update dataValue update status
-          this.dataUpdateStatus = { [updateDataValue.domElementId]: 'FAIL' };
+          this.dataUpdateStatus = { [updateDataValue.domElementId]: "FAIL" };
         }
       );
   }
@@ -573,134 +628,433 @@ export class DataEntryFormPage implements OnInit {
     entryFormSections.forEach((entryFormSection: any) => {
       sections.push({
         id: entryFormSection.id,
-        name: entryFormSection.name
+        name: entryFormSection.name,
       });
     });
     return sections;
   }
 
   updateDataSetCompleteness() {
-    console.log("CAINAMIST::: COMPLETING FORM")
-    this.content.scrollToBottom(1000);
-    this.isDataSetCompletenessProcessRunning = true;
-    const entryFormSelection = dhis2.dataEntrySelection;
-    const period = this.entryFormParameter.period.iso;
-    const orgUnitId = this.entryFormParameter.orgUnit.id;
-    const dataDimension = this.entryFormParameter.dataDimension;
-    if (this.isDataSetCompleted) {
-      this.offlineCompletenessProvider
-        .offlneEntryFormUncompleteness(entryFormSelection, this.currentUser)
-        .subscribe(
-          () => {
-            this.dataSetsCompletenessInfo = {};
-            this.isDataSetCompletenessProcessRunning = false;
-            this.isDataSetCompleted = false;
-            this.content.scrollToBottom(1000);
-          },
-          error => {
-            this.isDataSetCompletenessProcessRunning = false;
-            console.log(JSON.stringify(error));
-            this.appProvider.setNormalNotification(
-              'Failed to un complete entry form'
-            );
-          }
-        );
-    } else {
-      const {
-        status,
-        violatedMandatoryFields
-      } = this.dataEntryFormProvider.getViolatedCompulsoryDataElementOperands(
-        this.compulsoryDataElementOperands,
-        this.dataValuesObject
-      );
-      // @todo also checking default settings
-      if (status) {
-        const fieldNames = _.map(
-          violatedMandatoryFields,
-          (violatedMandatoryField: any) => {
-            const { dimensionItem, name } = violatedMandatoryField;
-            this.dataValuesSavingStatusClass[dimensionItem] =
-              'input-field-container-failed';
-            return name;
-          }
-        );
-        this.isDataSetCompletenessProcessRunning = false;
-        const message = `${fieldNames.join(',')} ${
-          fieldNames.length > 1 ? 'are' : 'is'
-        }  mandatory field${
-          fieldNames.length > 1 ? 's' : ''
-        }, plaese enter data before complete this form`;
-        this.appProvider.setTopNotification(message);
-      } else {
-        this.offlineCompletenessProvider
-          .offlneEntryFormCompleteness(entryFormSelection, this.currentUser)
-          .subscribe(
-            (dataSetCompletenessInfo: any) => {
-              this.dataSetsCompletenessInfo = dataSetCompletenessInfo;
-              if (dataSetCompletenessInfo && dataSetCompletenessInfo.complete) {
-                this.isDataSetCompleted = true;
-                this.content.scrollToBottom(1000);
+    const { isAvailable } = this.networkAvailabilityProvider.getNetWorkStatus();
+
+    if (isAvailable) {
+      this.content.scrollToBottom(1000);
+      this.isDataSetCompletenessProcessRunning = true;
+      const entryFormSelection = dhis2.dataEntrySelection;
+      const period = this.entryFormParameter.period.iso;
+      const orgUnitId = this.entryFormParameter.orgUnit.id;
+      const dataDimension = this.entryFormParameter.dataDimension;
+
+      if (this.isDataSetCompleted) {
+        this.uploadDataValuesOnComplete(
+          period,
+          orgUnitId,
+          dataDimension,
+          this.dataSet.id,
+          this.isDataSetCompleted
+        ).subscribe((importResponse: ImportResponse) => {
+          if (importResponse && importResponse.status === (200 || 201)) {
+            const completenessResponse: CompletenessResponse = JSON.parse(
+              importResponse.data
+            ) as CompletenessResponse;
+
+            if (
+              completenessResponse &&
+              (completenessResponse.status === "ERROR" ||
+                completenessResponse.status === "CONFLICT")
+            ) {
+              // TODO: Implement Section In The Future If There Is A Need
+              this.isDataSetCompleted = false;
+              this.isDataSetCompletenessProcessRunning = false;
+              if (
+                completenessResponse &&
+                completenessResponse.conflicts &&
+                completenessResponse.conflicts.length > 0
+              ) {
+                this.appProvider.setNormalNotification(
+                  "Oops, Please respond to the following questions before uncompleting dataset"
+                );
               }
-              this.isDataSetCompletenessProcessRunning = false;
-              this.uploadDataValuesOnComplete(period, orgUnitId, dataDimension);
-            },
-            error => {
-              this.isDataSetCompletenessProcessRunning = false;
-              console.log(JSON.stringify(error));
-              this.appProvider.setNormalNotification(
-                'Failed to complete entry form'
-              );
+            } else {
+              this.offlineCompletenessProvider
+                .offlneEntryFormUncompleteness(
+                  entryFormSelection,
+                  this.currentUser
+                )
+                .subscribe(
+                  () => {
+                    this.dataSetsCompletenessInfo = {};
+                    this.isDataSetCompletenessProcessRunning = false;
+                    this.isDataSetCompleted = false;
+                    this.content.scrollToBottom(1000);
+                  },
+                  (error) => {
+                    this.isDataSetCompletenessProcessRunning = false;
+                    console.log(JSON.stringify(error));
+                    this.appProvider.setNormalNotification(
+                      "Failed to un complete entry form"
+                    );
+                  }
+                );
+              // this.offlineCompletenessProvider
+              //   .offlneEntryFormCompleteness(
+              //     entryFormSelection,
+              //     this.currentUser
+              //   )
+              //   .subscribe(
+              //     (dataSetCompletenessInfo: DataSetCompletenessInfo) => {
+              //       this.dataSetsCompletenessInfo = dataSetCompletenessInfo;
+              //       if (
+              //         dataSetCompletenessInfo &&
+              //         dataSetCompletenessInfo.complete
+              //       ) {
+              //         this.isDataSetCompleted = true;
+              //         this.content.scrollToBottom(1000);
+              //       }
+              //       this.isDataSetCompletenessProcessRunning = false;
+              //     },
+              //     (error) => {
+              //       this.isDataSetCompletenessProcessRunning = false;
+              //       console.log(JSON.stringify(error));
+              //       this.appProvider.setNormalNotification(
+              //         "Failed to complete entry form"
+              //       );
+              //     }
+              //   );
+            }
+          }
+        });
+      } else {
+        const { status, violatedMandatoryFields } =
+          this.dataEntryFormProvider.getViolatedCompulsoryDataElementOperands(
+            this.compulsoryDataElementOperands,
+            this.dataValuesObject
+          );
+
+        // @todo also checking default settings
+        if (status) {
+          const fieldNames = _.map(
+            violatedMandatoryFields,
+            (violatedMandatoryField: any) => {
+              const { dimensionItem, name } = violatedMandatoryField;
+              this.dataValuesSavingStatusClass[dimensionItem] =
+                "input-field-container-failed";
+              return name;
             }
           );
+
+          console.log("CAINAMIST::: ", JSON.stringify(status));
+          console.log(
+            "CAINAMIST::: FIELDS ",
+            JSON.stringify(violatedMandatoryFields)
+          );
+
+          if (violatedMandatoryFields && violatedMandatoryFields.length > 0) {
+            this.navCtrl.push("CompulsoryNotificationPage", {
+              compulsoryFields: violatedMandatoryFields,
+            });
+          }
+
+          this.isDataSetCompletenessProcessRunning = false;
+
+          // ! DEPRECATED APPROACH OF TOASTING A LIST OF VIOLATED FIELDS
+          // const message = `${fieldNames.join(",")} ${
+          //   fieldNames.length > 1 ? "are" : "is"
+          // }  mandatory field${
+          //   fieldNames.length > 1 ? "s" : ""
+          // }, plaese enter data before complete this form`;
+          // this.appProvider.setTopNotification(message);
+        } else {
+          this.uploadDataValuesOnComplete(
+            period,
+            orgUnitId,
+            dataDimension,
+            this.dataSet.id,
+            this.isDataSetCompleted
+          ).subscribe((importResponse: ImportResponse) => {
+            if (importResponse && importResponse.status === (200 || 201)) {
+              const completenessResponse: CompletenessResponse = JSON.parse(
+                importResponse.data
+              ) as CompletenessResponse;
+
+              if (
+                completenessResponse &&
+                (completenessResponse.status === "ERROR" ||
+                  completenessResponse.status === "CONFLICT")
+              ) {
+                // TODO: Implement Section In The Future If There Is A Need
+                this.isDataSetCompleted = false;
+                this.isDataSetCompletenessProcessRunning = false;
+                if (
+                  completenessResponse &&
+                  completenessResponse.conflicts &&
+                  completenessResponse.conflicts.length > 0
+                ) {
+                  this.appProvider.setNormalNotification(
+                    "Oops, Please respond to the following questions before completing dataset"
+                  );
+                }
+              } else {
+                this.offlineCompletenessProvider
+                  .offlneEntryFormCompleteness(
+                    entryFormSelection,
+                    this.currentUser
+                  )
+                  .subscribe(
+                    (dataSetCompletenessInfo: DataSetCompletenessInfo) => {
+                      this.dataSetsCompletenessInfo = dataSetCompletenessInfo;
+                      if (
+                        dataSetCompletenessInfo &&
+                        dataSetCompletenessInfo.complete
+                      ) {
+                        this.isDataSetCompleted = true;
+                        this.content.scrollToBottom(1000);
+                      }
+                      this.isDataSetCompletenessProcessRunning = false;
+                    },
+                    (error) => {
+                      this.isDataSetCompletenessProcessRunning = false;
+                      console.log(JSON.stringify(error));
+                      this.appProvider.setNormalNotification(
+                        "Failed to complete entry form"
+                      );
+                    }
+                  );
+              }
+            }
+          });
+        }
       }
+    } else {
+      this.appProvider.setNormalNotification(
+        `Failed to complete/un-complete dataset due to network error. Please check your internet connectivity`
+      );
     }
   }
 
   uploadDataValuesOnComplete(
     period: string,
     orgUnitId: string,
-    dataDimension: any
+    dataDimension: any,
+    dataSetId: string,
+    completeStatus: boolean
   ) {
-    let dataValues = [];
-    if (this.dataValuesObject) {
-      Object.keys(this.dataValuesObject).map((fieldId: any) => {
-        const fieldIdArray = fieldId.split('-');
-        if (this.dataValuesObject[fieldId]) {
-          let dataValue = this.dataValuesObject[fieldId];
-          dataValues.push({
-            de: fieldIdArray[0],
-            co: fieldIdArray[1],
-            pe: period,
-            ou: orgUnitId,
-            cc: dataDimension.cc,
-            cp: dataDimension.cp,
-            value: dataValue.value
-          });
-        }
-      });
-    }
-    if (dataValues.length > 0) {
-      this.loadingMessage = 'Uploading data';
-      let formattedDataValues = this.dataValuesProvider.getFormattedDataValueForUpload(
-        dataValues
-      );
+    return new Observable((observer) => {
+      let sqliteDataValues: SQLITEDataValue[] = [];
+
       this.dataValuesProvider
-        .uploadDataValues(
-          formattedDataValues,
-          formattedDataValues,
+        .getAllEntryFormDataValuesFromStorage(
+          dataSetId,
+          period,
+          orgUnitId,
+          this.entryFormSections,
+          dataDimension,
           this.currentUser
         )
-        .subscribe(
-          () => {
-            this.storageStatus.offline = 0;
-            this.storageStatus.online += dataValues.length;
-            console.log('Success uploading data');
-          },
-          error => {
-            console.log('Failed to upload data');
+        .pipe(take(1))
+        .subscribe((offlineSQLITEDataValues: OfflineSQLITEDataValue[]) => {
+          if (offlineSQLITEDataValues && offlineSQLITEDataValues.length > 0) {
+            const offlineSQLITEDataValueObject: {
+              [key: string]: OfflineSQLITEDataValue;
+            } = _.keyBy(
+              _.filter(
+                offlineSQLITEDataValues,
+                (offlineSQLITEDataValue: OfflineSQLITEDataValue) =>
+                  offlineSQLITEDataValue.status === "not-synced"
+              ),
+              "id"
+            );
+
+            const processedDataValues = _.map(
+              _.keys(offlineSQLITEDataValueObject),
+              (fieldId: string) => {
+                const fieldIdArray = fieldId.split("-");
+                return {
+                  de: fieldIdArray[0],
+                  co: fieldIdArray[1],
+                  pe: period,
+                  ou: orgUnitId,
+                  cc: dataDimension.cc,
+                  cp: dataDimension.cp,
+                  value: offlineSQLITEDataValueObject[fieldId].value,
+                };
+              }
+            );
+
+            if (processedDataValues) {
+              const offlineCompleteDataValuePayload: OfflineCompleteDataValuePayload =
+                getStandardDataValuePayload(
+                  processedDataValues,
+                  orgUnitId,
+                  dataSetId,
+                  period
+                );
+
+              // ! Deprecated Approach
+              let formattedDataValues =
+                this.dataValuesProvider.getFormattedDataValueForUpload(
+                  sqliteDataValues
+                );
+
+              const completenessPayload: CompletenessPayload = {
+                completeDataSetRegistrations: [
+                  {
+                    dataSet: dataSetId,
+                    period: period,
+                    organisationUnit: orgUnitId,
+                    completed: !completeStatus,
+                  },
+                ],
+              };
+
+              this.dataValuesProvider
+                .uploadDataValues(
+                  true,
+                  formattedDataValues,
+                  processedDataValues,
+                  this.currentUser,
+                  offlineCompleteDataValuePayload,
+                  completenessPayload
+                )
+                .subscribe(
+                  ({ importSummaries, importResponse }) => {
+                    const shortImportSummary: ShortImportSummary =
+                      importSummaries;
+                    const mImportResponse: ImportResponse = importResponse;
+
+                    if (
+                      !mImportResponse &&
+                      shortImportSummary.fail > 0 &&
+                      shortImportSummary.errorMessages.length > 0
+                    ) {
+                      this.navCtrl.push("ConflictNotificationPage", {
+                        conflicts:
+                          mImportResponse &&
+                          mImportResponse.data &&
+                          JSON.parse(mImportResponse.data) &&
+                          JSON.parse(mImportResponse.data).conflicts
+                            ? JSON.parse(mImportResponse.data).conflicts
+                            : [],
+                      });
+                      // ToDO: Improve The Approach
+                      console.log(
+                        "CAINAM NOTIFICATION::: " +
+                          JSON.stringify(shortImportSummary.errorMessages)
+                      );
+                    } else {
+                      if (
+                        mImportResponse &&
+                        mImportResponse.status === (200 || 201)
+                      ) {
+                        const completenessResponse: CompletenessResponse =
+                          JSON.parse(
+                            mImportResponse.data
+                          ) as CompletenessResponse;
+
+                        if (
+                          completenessResponse &&
+                          completenessResponse.status === "ERROR"
+                        ) {
+                          if (
+                            completenessResponse.conflicts &&
+                            completenessResponse.conflicts.length > 0
+                          ) {
+                            this.navCtrl.push("ConflictNotificationPage", {
+                              conflicts: completenessResponse.conflicts,
+                            });
+                          }
+                          observer.next(mImportResponse);
+                          observer.complete();
+                        } else {
+                          this.isDataSetCompletedAndLocked = !completeStatus;
+                          this.storageStatus.offline = 0;
+                          this.storageStatus.online += sqliteDataValues.length;
+                          this.appProvider.setNormalNotification(
+                            `Data set ${
+                              !completeStatus ? "COMPLETED" : "UN-COMPLETED"
+                            } successfully`
+                          );
+                          console.log("Success uploading data");
+                          observer.next(mImportResponse);
+                          observer.complete();
+                        }
+                      }
+                    }
+                  },
+                  (error) => {
+                    this.appProvider.setNormalNotification(
+                      "Error while completing Dataset"
+                    );
+
+                    console.log("Failed to upload data");
+                    observer.next(error);
+                    observer.complete();
+                  }
+                );
+            }
           }
-        );
-    }
+        });
+
+      // if (this.dataValuesObject) {
+      //   Object.keys(this.dataValuesObject).map((fieldId: any) => {
+      //     const fieldIdArray = fieldId.split("-");
+      //     if (this.dataValuesObject[fieldId]) {
+      //       let dataValue = this.dataValuesObject[fieldId];
+
+      //       sqliteDataValues.push({
+      //         de: fieldIdArray[0],
+      //         co: fieldIdArray[1],
+      //         pe: period,
+      //         ou: orgUnitId,
+      //         cc: dataDimension.cc,
+      //         cp: dataDimension.cp,
+      //         value: dataValue.value,
+      //       });
+      //     }
+      //   });
+      // }
+
+      // if (sqliteDataValues.length > 0) {
+      //   this.loadingMessage = "Uploading data";
+
+      //   const offlineCompleteDataValuePayload: OfflineCompleteDataValuePayload =
+      //     getStandardDataValuePayload(
+      //       sqliteDataValues,
+      //       orgUnitId,
+      //       dataSetId,
+      //       period
+      //     );
+
+      //   // ! Deprecated Approach
+      //   let formattedDataValues =
+      //     this.dataValuesProvider.getFormattedDataValueForUpload(
+      //       sqliteDataValues
+      //     );
+
+      //   this.dataValuesProvider
+      //     .uploadDataValues(
+      //       formattedDataValues,
+      //       sqliteDataValues,
+      //       this.currentUser
+      //     )
+      //     .subscribe(
+      //       () => {
+      //         this.storageStatus.offline = 0;
+      //         this.storageStatus.online += sqliteDataValues.length;
+      //         console.log("Success uploading data");
+      //         this.appProvider.setNormalNotification(
+      //           "Data set completed successfully"
+      //         );
+      //       },
+      //       (error) => {
+      //         this.appProvider.setNormalNotification(
+      //           "Error while completing Dataset"
+      //         );
+      //         console.log("Failed to upload data");
+      //       }
+      //     );
+      // }
+    });
   }
 
   trackByFn(index, item) {

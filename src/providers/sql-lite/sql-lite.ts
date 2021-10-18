@@ -57,11 +57,11 @@ export class SqlLiteProvider {
     const tableObject = this.getDataBaseStructure()[tableName];
     const { dependentTable } = tableObject;
     if (dependentTable && dependentTable.length > 0) {
-      dependentTable.map(tableName => {
+      dependentTable.map((tableName) => {
         tableNames.push(`${tableName}`);
       });
     }
-    return new Observable(observer => {
+    return new Observable((observer) => {
       let success = 0;
       for (const table of tableNames) {
         this.dropTable(table, databaseName).subscribe(
@@ -80,7 +80,7 @@ export class SqlLiteProvider {
               );
             }
           },
-          error => {
+          (error) => {
             success++;
             if (success === tableNames.length) {
               this.generateTables(databaseName).subscribe(
@@ -106,7 +106,7 @@ export class SqlLiteProvider {
    * @returns {Observable<any>}
    */
   generateTables(databaseName): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       const tableNames = Object.keys(this.getDataBaseStructure());
       let success = 0;
       let fail = 0;
@@ -138,7 +138,7 @@ export class SqlLiteProvider {
    */
   createTable(tableName, databaseName): Observable<any> {
     databaseName = databaseName + ".db";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       let query = "CREATE TABLE IF NOT EXISTS " + tableName + " (";
       const columns = this.getDataBaseStructure()[tableName].columns;
       columns.map((column: any, index: any) => {
@@ -160,14 +160,14 @@ export class SqlLiteProvider {
               observer.next();
               observer.complete();
             },
-            error => {
+            (error) => {
               console.log("Error on create table " + tableName);
               console.log("Error occurred " + JSON.stringify(error));
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error();
           console.log(e);
         });
@@ -202,7 +202,7 @@ export class SqlLiteProvider {
       start,
       end
     );
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (bulkData.length === 0) {
         observer.next();
         observer.complete();
@@ -212,6 +212,7 @@ export class SqlLiteProvider {
           batchInsertQueryAndParameter.queries
         ).subscribe(
           () => {
+
             start = batchInsertQueryAndParameter.startPoint - 1;
             end = insertBatchSize + start;
             if (bulkData[batchInsertQueryAndParameter.startPoint]) {
@@ -226,7 +227,7 @@ export class SqlLiteProvider {
                   observer.next();
                   observer.complete();
                 },
-                error => {
+                (error) => {
                   observer.error(error);
                   //@todo resolving batch size issues
                   console.log("Error on insert on table " + tableName);
@@ -238,7 +239,7 @@ export class SqlLiteProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             console.log("Error on insert on table " + tableName);
             console.log(JSON.stringify(error));
             observer.error(error);
@@ -256,7 +257,7 @@ export class SqlLiteProvider {
    */
   insertDataUsingQueryAndParameters(databaseName, queries): Observable<any> {
     databaseName = databaseName + ".db";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
@@ -265,12 +266,12 @@ export class SqlLiteProvider {
               observer.next();
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error(e);
         });
     });
@@ -336,7 +337,7 @@ export class SqlLiteProvider {
     }
     return {
       queries: queries,
-      startPoint: startPoint
+      startPoint: startPoint,
     };
   }
 
@@ -363,22 +364,22 @@ export class SqlLiteProvider {
       " = '" +
       attributesValue +
       "'";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
           db.executeSql(query, []).then(
-            success => {
+            (success) => {
               observer.next();
               observer.complete();
             },
-            error => {
+            (error) => {
               console.log(JSON.stringify(error));
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error(e);
         });
     });
@@ -393,21 +394,21 @@ export class SqlLiteProvider {
   dropTable(tableName, databaseName): Observable<any> {
     databaseName = databaseName + ".db";
     let query = "DROP TABLE " + tableName;
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
           db.executeSql(query, []).then(
-            success => {
+            (success) => {
               observer.next(success);
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error();
         });
     });
@@ -439,7 +440,7 @@ export class SqlLiteProvider {
       }
     });
     query += inClauseValues;
-    query += isUploading ? ") LIMIT 10" : ")";
+    query += isUploading ? ") LIMIT 50" : ")";
 
     let queryUpload =
       "SELECT * FROM " + tableName + " WHERE " + attribute + " IN (";
@@ -452,46 +453,47 @@ export class SqlLiteProvider {
     });
     queryUpload += inClauseValuesUpload;
     queryUpload += ")";
-    return new Observable(observer => {
+    
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
           if (isUploading && tableName === "dataValues") {
             db.executeSql(query, []).then(
-              result => {
+              (result) => {
                 db.executeSql(queryUpload, []).then(
-                  uploadResult => {
+                  (uploadResult) => {
                     observer.next({
                       data: this.formatQueryReturnResult(result, columns),
                       dataUpload: this.formatQueryReturnResult(
                         uploadResult,
                         columns
-                      )
+                      ),
                     });
                     observer.complete();
                   },
-                  error => {
+                  (error) => {
                     observer.error(error);
                   }
                 );
               },
-              error => {
+              (error) => {
                 observer.error(error);
               }
             );
           } else {
             db.executeSql(query, []).then(
-              result => {
+              (result) => {
                 observer.next(this.formatQueryReturnResult(result, columns));
                 observer.complete();
               },
-              error => {
+              (error) => {
                 observer.error(error);
               }
             );
           }
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error(e);
         });
     });
@@ -507,22 +509,22 @@ export class SqlLiteProvider {
   getByUsingQuery(query, tableName, databaseName): Observable<any> {
     databaseName = databaseName + ".db";
     let columns = this.getDataBaseStructure()[tableName].columns;
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
           db.executeSql(query, []).then(
-            result => {
+            (result) => {
               observer.next(this.formatQueryReturnResult(result, columns));
               observer.complete();
             },
-            error => {
+            (error) => {
               console.log("error : " + JSON.stringify(error));
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error(e);
         });
     });
@@ -538,21 +540,21 @@ export class SqlLiteProvider {
     databaseName = databaseName + ".db";
     let columns = this.getDataBaseStructure()[tableName].columns;
     let query = "SELECT * FROM " + tableName + ";";
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
           db.executeSql(query, []).then(
-            result => {
+            (result) => {
               observer.next(this.formatQueryReturnResult(result, columns));
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error(e);
         });
     });
@@ -567,22 +569,22 @@ export class SqlLiteProvider {
   deleteAllOnTable(tableName, databaseName): Observable<any> {
     databaseName = databaseName + ".db";
     let query = "DELETE FROM " + tableName;
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlite
         .create({ name: databaseName, location: "default" })
         .then((db: SQLiteObject) => {
           db.executeSql(query, []).then(
-            success => {
+            (success) => {
               observer.next();
               observer.complete();
               console.log("Success in delete table contents on " + tableName);
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
         })
-        .catch(e => {
+        .catch((e) => {
           observer.error(e);
         });
     });
@@ -600,7 +602,7 @@ export class SqlLiteProvider {
     for (let i = 0; i < len; i++) {
       let row = {};
       let currentRow = result.rows.item(i);
-      columns.forEach(column => {
+      columns.forEach((column) => {
         let columnName = column.value;
         if (currentRow[columnName]) {
           if (column.type != "LONGTEXT") {

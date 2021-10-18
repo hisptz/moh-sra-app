@@ -1,0 +1,26 @@
+<!-- Generated template for the ConflictListComponent component -->
+<div *ngIf="currentUserInfo && currentUserInfo.name">
+  <ion-item>
+    <h3>Hello <b>{{ currentUserInfo.name }},</b></h3>
+    <p>
+      <b
+        >Make sure the following QUESTION(s) are responded before COMPLETING
+      </b>
+    </p>
+  </ion-item>
+</div>
+<br />
+<div>
+  <table>
+    <tr>
+      <th class="text-center">S/N</th>
+      <th class="text-center">Reason</th>
+      <th class="text-center">Name</th>
+    </tr>
+    <tr *ngFor="let conflict of conflicts; let i = index">
+      <td class="text-center">{{ i + 1 }}</td>
+      <td>{{ conflict.object }}</td>
+      <td>{{ conflict.value }}</td>
+    </tr>
+  </table>
+</div>

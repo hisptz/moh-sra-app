@@ -37,7 +37,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: true,
     shouldIncludeOnLogin: true,
     resourceType: 'communication',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Organisation Units',
     dependentTable: []
   },
@@ -51,7 +51,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Local instance',
     dependentTable: []
   },
@@ -122,7 +122,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data set entry form design',
     dependentTable: []
   },
@@ -134,7 +134,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data Set Elements',
     dependentTable: []
   },
@@ -146,7 +146,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data Set Indicators',
     dependentTable: []
   },
@@ -158,7 +158,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data Set Source',
     dependentTable: []
   },
@@ -170,7 +170,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data Set Sections',
     dependentTable: []
   },
@@ -185,7 +185,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data Set Operands',
     dependentTable: []
   },
@@ -201,7 +201,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: true,
     shouldIncludeOnLogin: true,
     resourceType: 'entryForm',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Sections',
     dependentTable: ['sectionDataElements', 'sectionIndicators']
   },
@@ -213,7 +213,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Section data Elements',
     dependentTable: []
   },
@@ -225,7 +225,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Section Indicators',
     dependentTable: []
   },
@@ -245,7 +245,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: true,
     shouldIncludeOnLogin: true,
     resourceType: 'entryForm',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Data Elements',
     dependentTable: []
   },
@@ -289,7 +289,7 @@ export const DATABASE_STRUCTURE = {
     ],
     isMetadata: true,
     displayName: 'Indicators',
-    batchSize: 500,
+    batchSize: 100,
     shouldIncludeOnLogin: true,
     resourceType: 'report',
     dependentTable: []
@@ -329,7 +329,7 @@ export const DATABASE_STRUCTURE = {
       { value: 'value', type: 'TEXT' }
     ],
     isMetadata: true,
-    batchSize: 500,
+    batchSize: 100,
     shouldIncludeOnLogin: true,
     resourceType: 'report',
     displayName: 'Constants',
@@ -353,7 +353,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 50,
     displayName: 'Data Values',
     dependentTable: []
   },
@@ -374,7 +374,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: 'Offline completeness',
     dependentTable: []
   },
@@ -434,7 +434,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: true,
     shouldIncludeOnLogin: true,
     resourceType: 'event',
-    batchSize: 50,
+    batchSize: 10,
     displayName: 'Programs',
     dependentTable: [
       'programProgramTrackedEntityAttributes',
@@ -625,7 +625,7 @@ export const DATABASE_STRUCTURE = {
     isMetadata: false,
     shouldIncludeOnLogin: false,
     resourceType: '',
-    batchSize: 500,
+    batchSize: 100,
     displayName: '',
     dependentTable: []
   },

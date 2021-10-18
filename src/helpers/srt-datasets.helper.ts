@@ -1,4 +1,5 @@
 import * as _ from "lodash";
+import { DEFAULT_APP_METADATA } from "../constants";
 
 export interface CategoryOption {
     name: string;
@@ -41,7 +42,8 @@ export interface Dataset {
 }
 
 export function SRTDatasets(datasets: Dataset[]): any {
-    const SRTAllowedDatasets = ["nqKkegk1y8U", "RixTh0Xs0A7", "fiDtcNUzKI6"];
+    // ToDo: Filtering Datasets Specifically for SRA
+    const SRTAllowedDatasets = DEFAULT_APP_METADATA.dataSets.defaultIds;
     return _.isArray(datasets)
         ? _.filter(datasets, (dataset: Dataset) =>
             _.includes(SRTAllowedDatasets, dataset.id)

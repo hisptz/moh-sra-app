@@ -70,9 +70,12 @@ export class DataElementsProvider {
 
   async getDataElementByProgramIdsOrDataSetIds(currentUser: CurrentUser) {
     const dataElementsIds = await this.getDataElementIds(currentUser);
-    const fields = `fields=id,name,formName,aggregationType,categoryCombo[id],displayName,description,valueType,optionSet[name,options[name,id,code]]`;
+    const fields = `fields=id,name,formName,aggregationType,categoryCombo[id],displayName,description,valueType,optionSet[name,options[name,id,code]],attributeValues[*]`;
     const resource = 'dataElements';
     const url = `/api/${resource}.json?paging=false&${fields}`;
+
+    console.log('CAINAMIST DATA ELEMENT URL::: ', JSON.stringify(url));
+
     const dataElementResponse = [];
     let errorResponse = null;
     if (dataElementsIds && dataElementsIds.length > 0) {

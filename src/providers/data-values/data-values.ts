@@ -28,6 +28,25 @@ import { NetworkAvailabilityProvider } from "../network-availability/network-ava
 import { Observable } from "rxjs/Observable";
 import * as _ from "lodash";
 import { CurrentUser } from "../../models";
+import { of } from "rxjs/observable/of";
+import { concatMap } from "rxjs/operators";
+import { defer } from "rxjs/observable/defer";
+import { Subscription } from "rxjs";
+import {
+  ImportResponse,
+  ImportSummary,
+} from "../../models/import-response.model";
+import {
+  OfflineCompleteDataValuePayload,
+  SQLITEDataValue,
+  SynchronizationDataValuePayload,
+} from "../../models/data-value.model";
+import { AppProvider } from "../app/app";
+import {
+  CompletenessPayload,
+  CompletenessResponse,
+} from "../../models/completeness.model";
+import { NavController } from "ionic-angular";
 
 @Injectable()
 export class DataValuesProvider {
@@ -36,7 +55,8 @@ export class DataValuesProvider {
   constructor(
     private httpClient: HttpClientProvider,
     private sqlLite: SqlLiteProvider,
-    private network: NetworkAvailabilityProvider
+    private network: NetworkAvailabilityProvider,
+    private appProvider: AppProvider
   ) {
     this.resourceName = "dataValues";
   }
@@ -51,20 +71,21 @@ export class DataValuesProvider {
     let parameter =
       "dataSet=" + dataSetId + "&period=" + period + "&orgUnit=" + orgUnitId;
     let networkStatus = this.network.getNetWorkStatus();
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (networkStatus.isAvailable) {
         this.httpClient
           .get("/api/dataValueSets.json?" + parameter, true, currentUser)
           .subscribe(
             (response: any) => {
-              const dataValues = this.getFilteredDataValuesByDataSetAttributeOptionCombo(
-                response,
-                attributeOptionCombo
-              );
+              const dataValues =
+                this.getFilteredDataValuesByDataSetAttributeOptionCombo(
+                  response,
+                  attributeOptionCombo
+                );
               observer.next(dataValues);
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
@@ -82,7 +103,7 @@ export class DataValuesProvider {
   ): Observable<any> {
     let attributeArray = [];
     attributeArray.push(status);
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlLite
         .getDataFromTableByAttributes(
           this.resourceName,
@@ -98,7 +119,7 @@ export class DataValuesProvider {
                 dataValues: dataValues.data ? dataValues.data : [],
                 dataValuesToUpload: dataValues.dataUpload
                   ? dataValues.dataUpload
-                  : []
+                  : [],
               });
               observer.complete();
             } else {
@@ -106,7 +127,7 @@ export class DataValuesProvider {
               observer.complete();
             }
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -115,7 +136,7 @@ export class DataValuesProvider {
 
   getFormattedDataValueForUpload(dataValues: any[]) {
     return _.flatMapDeep(
-      _.map(dataValues, dataValue => {
+      _.map(dataValues, (dataValue) => {
         const { de, pe, ou, co, cp, cc } = dataValue;
         let value = dataValue.value;
         let formParameter = `de=${de}&pe=${pe}&ou=${ou}&co=${co}`;
@@ -134,85 +155,389 @@ export class DataValuesProvider {
   }
 
   uploadDataValues(
+    isCompleting: boolean,
     formattedDataValues: string[],
-    dataValues: any[],
-    currentUser: CurrentUser
+    sqliteDataValues: SQLITEDataValue[],
+    currentUser: CurrentUser,
+    synchronizationDataValuePayload?:
+      | SynchronizationDataValuePayload
+      | OfflineCompleteDataValuePayload,
+    completenessPayload?: CompletenessPayload
   ): Observable<any> {
     let syncedDataValues = [];
     let importSummaries = {
       success: 0,
       fail: 0,
-      errorMessages: []
+      errorMessages: [],
     };
-    return new Observable(observer => {
-      formattedDataValues.forEach((formattedDataValue: any, index: any) => {
-        const url = `/api/dataValues?${formattedDataValue}`;
-        this.httpClient.post(url, {}, currentUser).subscribe(
-          () => {
-            let syncedDataValue = dataValues[index];
-            importSummaries.success++;
-            syncedDataValue["syncStatus"] = "synced";
-            syncedDataValues.push(syncedDataValue);
-            if (
-              formattedDataValues.length ==
-              importSummaries.success + importSummaries.fail
-            ) {
-              if (syncedDataValues.length > 0) {
-                this.sqlLite
-                  .insertBulkDataOnTable(
-                    this.resourceName,
-                    syncedDataValues,
-                    currentUser.currentDatabase
-                  )
-                  .subscribe(
-                    () => {
-                      observer.next(importSummaries);
-                      observer.complete();
-                    },
-                    error => {
-                      observer.error(error);
+
+    if (isCompleting) {
+      return new Observable((observer) => {
+        if (sqliteDataValues && synchronizationDataValuePayload) {
+          const url = `/api/dataValueSets.json?dataElementIdScheme=uid&orgUnitIdScheme=uid&importStrategy=CREATE_AND_UPDATE`;
+          const completenessURL = `/api/completeDataSetRegistrations`;
+
+          let message = "";
+          const dataValueSetsSubscription$: Subscription = this.httpClient
+            .post(url, synchronizationDataValuePayload, currentUser)
+            .subscribe((importResponse: ImportResponse) => {
+              if (importResponse && importResponse.status === (200 || 201)) {
+                const importSummary: ImportSummary = JSON.parse(
+                  importResponse.data
+                ) as ImportSummary;
+
+                // Success Count
+                importSummaries.success =
+                  importSummaries.success +
+                  +importSummary.importCount.imported +
+                  +importSummary.importCount.updated;
+
+                // Failure Count
+                importSummaries.fail =
+                  importSummaries.fail + +importSummary.importCount.ignored;
+
+                importSummaries.errorMessages = [
+                  ...importSummaries.errorMessages,
+                  ...importSummary.conflicts,
+                ];
+
+                if (
+                  importSummary &&
+                  importSummary.importCount &&
+                  importSummary.importCount.ignored === 0
+                ) {
+                  const processedDataValues: SQLITEDataValue[] = _.map(
+                    sqliteDataValues,
+                    (sqliteDataValue: SQLITEDataValue) => {
+                      return {
+                        ...sqliteDataValue,
+                        value: sqliteDataValue.value,
+                        syncStatus: "synced",
+                      };
                     }
                   );
+                  this.sqlLite
+                    .insertBulkDataOnTable(
+                      this.resourceName,
+                      processedDataValues,
+                      currentUser.currentDatabase
+                    )
+                    .subscribe(
+                      () => {
+                        const completenessResponse: CompletenessResponse =
+                          JSON.parse(
+                            importResponse.data
+                          ) as CompletenessResponse;
+                        if (
+                          completenessResponse &&
+                          completenessResponse.importCount &&
+                          completenessResponse.importCount.ignored > 0
+                        ) {
+                          observer.next({
+                            importSummaries,
+                            completenessResponse,
+                          });
+                          observer.complete();
+                        } else {
+                          const completenessSubscription$: Subscription =
+                            this.httpClient
+                              .post(
+                                completenessURL,
+                                completenessPayload,
+                                currentUser
+                              )
+                              .subscribe(
+                                (importResponse: ImportResponse) => {
+                                  if (
+                                    importResponse &&
+                                    importResponse.status === (200 || 201)
+                                  ) {
+                                    if (
+                                      completenessResponse &&
+                                      completenessResponse.status === "SUCCESS"
+                                    ) {
+                                      if (
+                                        importSummaries &&
+                                        importSummaries.fail > 0
+                                      ) {
+                                        message = `${importSummaries.success} response(s) synced successfully, ${importSummaries.fail} failed`;
+                                        this.appProvider.setTopNotification(
+                                          message
+                                        );
+                                      } else {
+                                        if (
+                                          importSummaries &&
+                                          importSummaries.success &&
+                                          importSummaries.success > 0
+                                        ) {
+                                          message = `${importSummaries.success} response(s) synced successfully`;
+                                          this.appProvider.setTopNotification(
+                                            message
+                                          );
+                                        }
+                                      }
+                                      observer.next({
+                                        importSummaries,
+                                        importResponse,
+                                      });
+                                      observer.complete();
+                                      if (dataValueSetsSubscription$) {
+                                        dataValueSetsSubscription$.unsubscribe();
+                                      }
+                                    } else if (
+                                      completenessResponse &&
+                                      completenessResponse.status === "ERROR"
+                                    ) {
+                                      if (
+                                        completenessResponse.conflicts &&
+                                        completenessResponse.conflicts.length >
+                                          0
+                                      ) {
+                                        observer.next({
+                                          importSummaries,
+                                          importResponse,
+                                        });
+                                        observer.complete();
+                                      } else {
+                                        observer.next({
+                                          importSummaries,
+                                          importResponse,
+                                        });
+                                        observer.complete();
+                                        this.appProvider.setNormalNotification(
+                                          "Error on Completing Dataset"
+                                        );
+                                      }
+                                    } else {
+                                      this.appProvider.setNormalNotification(
+                                        "Error on Completing Dataset"
+                                      );
+                                    }
+                                  } else {
+                                    observer.next({
+                                      importSummaries,
+                                      importResponse,
+                                    });
+                                    observer.complete();
+
+                                    if (completenessSubscription$) {
+                                      completenessSubscription$.unsubscribe();
+                                    }
+                                  }
+                                },
+                                (error) => {
+                                  if (error) {
+                                    this.appProvider.setNormalNotification(
+                                      "Error on Completing Dataset"
+                                    );
+                                  }
+                                }
+                              );
+                        }
+                      },
+                      (error) => {
+                        observer.error(error);
+                      }
+                    );
+                } else {
+                  observer.next({ importSummaries, importResponse: null });
+                  observer.complete();
+                }
               } else {
-                observer.next(importSummaries);
+                observer.next({ importSummaries, importResponse: null });
                 observer.complete();
+
+                if (dataValueSetsSubscription$) {
+                  dataValueSetsSubscription$.unsubscribe();
+                }
               }
-            }
-          },
-          error => {
-            importSummaries.fail++;
-            if (importSummaries.errorMessages.indexOf(error) == -1) {
-              importSummaries.errorMessages.push(error.error);
-            }
-            if (
-              formattedDataValues.length ==
-              importSummaries.success + importSummaries.fail
-            ) {
-              if (syncedDataValues.length > 0) {
-                this.sqlLite
-                  .insertBulkDataOnTable(
-                    this.resourceName,
-                    syncedDataValues,
-                    currentUser.currentDatabase
-                  )
-                  .subscribe(
-                    () => {
-                      observer.next(importSummaries);
-                      observer.complete();
-                    },
-                    error => {
-                      observer.error(error);
-                    }
-                  );
-              } else {
-                observer.next(importSummaries);
-                observer.complete();
-              }
-            }
-          }
-        );
+            });
+        } else {
+          observer.next();
+          observer.complete();
+        }
       });
-    });
+    } else {
+      return new Observable((observer) => {
+        if (
+          sqliteDataValues &&
+          synchronizationDataValuePayload &&
+          synchronizationDataValuePayload.dataValues &&
+          synchronizationDataValuePayload.dataValues.length > 0
+        ) {
+          const url = `/api/dataValueSets`;
+          let message = "";
+          const dataValueSetsSubscription$: Subscription = this.httpClient
+            .post(url, synchronizationDataValuePayload, currentUser)
+            .subscribe((importResponse: ImportResponse) => {
+              if (importResponse && importResponse.status === (200 || 201)) {
+                const importSummary: ImportSummary = JSON.parse(
+                  importResponse.data
+                ) as ImportSummary;
+
+                // Success Count
+                importSummaries.success =
+                  importSummaries.success +
+                  +importSummary.importCount.imported +
+                  +importSummary.importCount.updated;
+
+                // Failure Count
+                importSummaries.fail =
+                  importSummaries.fail + +importSummary.importCount.ignored;
+
+                importSummaries.errorMessages = [
+                  ...importSummaries.errorMessages,
+                  ...importSummary.conflicts,
+                ];
+
+                if (
+                  importSummary &&
+                  importSummary.importCount &&
+                  importSummary.importCount.ignored === 0
+                ) {
+                  const processedDataValues: SQLITEDataValue[] = _.map(
+                    sqliteDataValues,
+                    (sqliteDataValue: SQLITEDataValue) => {
+                      return {
+                        ...sqliteDataValue,
+                        syncStatus: "synced",
+                      };
+                    }
+                  );
+
+                  if (processedDataValues && processedDataValues.length > 0) {
+                    this.sqlLite
+                      .insertBulkDataOnTable(
+                        this.resourceName,
+                        processedDataValues,
+                        currentUser.currentDatabase
+                      )
+                      .subscribe(
+                        () => {
+                          if (importSummaries && importSummaries.fail > 0) {
+                            message = `${importSummaries.success} response(s) synced successfully, ${importSummaries.fail} failed`;
+                            this.appProvider.setTopNotification(message);
+                          } else {
+                            // message = `${importSummaries.success} response(s) synced successfully`;
+                            // this.appProvider.setTopNotification(message);
+                            if (
+                              importSummaries &&
+                              importSummaries.success &&
+                              importSummaries.success > 0
+                            ) {
+                              message = `${importSummaries.success} response(s) synced successfully`;
+                              this.appProvider.setTopNotification(message);
+                            }
+                          }
+                          observer.next(importSummaries);
+                          observer.complete();
+                          if (dataValueSetsSubscription$) {
+                            dataValueSetsSubscription$.unsubscribe();
+                          }
+                        },
+                        (error) => {
+                          observer.error(error);
+                        }
+                      );
+                  }
+                } else {
+                  if (importSummary.importCount.ignored > 0) {
+                    message = `${importSummaries.success} response(s) synced successfully, ${importSummaries.fail} failed`;
+                    this.appProvider.setTopNotification(message);
+                  }
+                  observer.next(importSummaries);
+                  observer.complete();
+                }
+              } else {
+                observer.next(importResponse);
+                observer.complete();
+
+                if (dataValueSetsSubscription$) {
+                  dataValueSetsSubscription$.unsubscribe();
+                }
+              }
+            });
+        } else {
+          observer.next();
+          observer.complete();
+        }
+      });
+    }
+
+    // return new Observable((observer) => {
+    //   formattedDataValues.forEach((formattedDataValue: any, index: any) => {
+    //     const url = `/api/dataValues?${formattedDataValue}`;
+    //     const dataValuesSubscriptios$: Subscription = this.httpClient
+    //       .post(url, {}, currentUser)
+    //       .subscribe(
+    //         (status) => {
+    //           if (dataValuesSubscriptios$) {
+    //             dataValuesSubscriptios$.unsubscribe();
+    //           }
+    //           let syncedDataValue = sqliteDataValues[index];
+    //           importSummaries.success++;
+    //           syncedDataValue["syncStatus"] = "synced";
+    //           syncedDataValues.push(syncedDataValue);
+    //           if (
+    //             formattedDataValues.length ==
+    //             importSummaries.success + importSummaries.fail
+    //           ) {
+    //             if (syncedDataValues.length > 0) {
+    //               this.sqlLite
+    //                 .insertBulkDataOnTable(
+    //                   this.resourceName,
+    //                   syncedDataValues,
+    //                   currentUser.currentDatabase
+    //                 )
+    //                 .subscribe(
+    //                   () => {
+    //                     observer.next(importSummaries);
+    //                     observer.complete();
+    //                   },
+    //                   (error) => {
+    //                     observer.error(error);
+    //                   }
+    //                 );
+    //             } else {
+    //               observer.next(importSummaries);
+    //               observer.complete();
+    //             }
+    //           }
+    //         },
+    //         (error) => {
+    //           importSummaries.fail++;
+    //           if (importSummaries.errorMessages.indexOf(error) == -1) {
+    //             importSummaries.errorMessages.push(error.error);
+    //           }
+    //           if (
+    //             formattedDataValues.length ==
+    //             importSummaries.success + importSummaries.fail
+    //           ) {
+    //             if (syncedDataValues.length > 0) {
+    //               this.sqlLite
+    //                 .insertBulkDataOnTable(
+    //                   this.resourceName,
+    //                   syncedDataValues,
+    //                   currentUser.currentDatabase
+    //                 )
+    //                 .subscribe(
+    //                   () => {
+    //                     observer.next(importSummaries);
+    //                     observer.complete();
+    //                   },
+    //                   (error) => {
+    //                     observer.error(error);
+    //                   }
+    //                 );
+    //             } else {
+    //               observer.next(importSummaries);
+    //               observer.complete();
+    //             }
+    //           }
+    //         }
+    //       );
+    //   });
+    // });
   }
 
   // ToDo: Improve loading local data during data upload and during data entry form opening
@@ -228,17 +553,17 @@ export class DataValuesProvider {
     const ids = _.flatMapDeep(
       _.map(entryFormSections, (section: any) => {
         const { dataElements } = section;
-        return _.map(dataElements, dataElement => {
+        return _.map(dataElements, (dataElement) => {
           const { categoryCombo } = dataElement;
           const { categoryOptionCombos } = categoryCombo;
-          return _.map(categoryOptionCombos, categoryOptionCombo => {
+          return _.map(categoryOptionCombos, (categoryOptionCombo) => {
             const id = `${dataSetId}-${dataElement.id}-${categoryOptionCombo.id}-${period}-${orgUnitId}`;
             return id;
           });
         });
       })
     );
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlLite
         .getDataFromTableByAttributes(
           this.resourceName,
@@ -259,14 +584,14 @@ export class DataValuesProvider {
                 entryFormDataValuesFromStorage.push({
                   id: dataValue.de + "-" + dataValue.co,
                   value: dataValue.value,
-                  status: dataValue.syncStatus
+                  status: dataValue.syncStatus,
                 });
               }
             });
             observer.next(entryFormDataValuesFromStorage);
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -331,9 +656,9 @@ export class DataValuesProvider {
     syncStatus: string,
     currentUser: CurrentUser
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (dataValues.length > 0) {
-        const bulkData = _.map(dataValues, dataValue => {
+        const bulkData = _.map(dataValues, (dataValue) => {
           const id = `${dataSetId}-${dataValue.dataElement}-${dataValue.categoryOptionCombo}-${period}-${orgUnitId}`;
           return {
             id,
@@ -347,7 +672,7 @@ export class DataValuesProvider {
             syncStatus: syncStatus,
             dataSetId: dataSetId,
             period: dataValue.period,
-            orgUnit: dataValue.orgUnit
+            orgUnit: dataValue.orgUnit,
           };
         });
         this.sqlLite
@@ -361,7 +686,7 @@ export class DataValuesProvider {
               observer.next();
               observer.complete();
             },
-            error => {
+            (error) => {
               observer.error(error);
             }
           );
@@ -378,7 +703,7 @@ export class DataValuesProvider {
   ): Observable<any> {
     let successCount = 0;
     let failCount = 0;
-    return new Observable(observer => {
+    return new Observable((observer) => {
       for (let dataValueId of dataValueIds) {
         this.sqlLite
           .deleteFromTableByAttribute(
@@ -395,7 +720,7 @@ export class DataValuesProvider {
                 observer.complete();
               }
             },
-            error => {
+            (error) => {
               failCount = failCount + 1;
               if (successCount + failCount == dataValueIds.length) {
                 observer.next();
@@ -408,7 +733,7 @@ export class DataValuesProvider {
   }
 
   getAllDataValues(currentUser: CurrentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlLite
         .getAllDataFromTable(this.resourceName, currentUser.currentDatabase)
         .subscribe(
@@ -416,7 +741,7 @@ export class DataValuesProvider {
             observer.next(dataValues);
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
@@ -424,7 +749,7 @@ export class DataValuesProvider {
   }
 
   deleteAllDataValues(currentUser): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.sqlLite
         .dropTable(this.resourceName, currentUser.currentDatabase)
         .subscribe(
@@ -432,7 +757,7 @@ export class DataValuesProvider {
             observer.next();
             observer.complete();
           },
-          error => {
+          (error) => {
             observer.error(error);
           }
         );
