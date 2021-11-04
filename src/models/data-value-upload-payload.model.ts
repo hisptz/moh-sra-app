@@ -20,4 +20,5 @@ export interface DataValue {
     orgUnit:    string;
     syncStatus: string;
     dataSetId:  string;
+    comment?:    string;
 }
