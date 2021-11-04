@@ -21,6 +21,7 @@ export interface SQLITEDataValue {
     orgUnit?: string;
     syncStatus?: string;
     dataSetId?: string;
+    comment?: string;
 }
 
 export interface SynchronizationDataValuePayload {
@@ -43,5 +44,6 @@ export interface OfflineSQLITEDataValue {
     id:     string;
     value:  string;
     status: string;
+    comment?: string;
 }
 
