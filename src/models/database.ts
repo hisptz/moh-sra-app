@@ -345,6 +345,7 @@ export const DATABASE_STRUCTURE = {
       { value: 'cc', type: 'TEXT' },
       { value: 'cp', type: 'TEXT' },
       { value: 'value', type: 'TEXT' },
+      { value: 'comment', type: 'TEXT' },
       { value: 'period', type: 'TEXT' },
       { value: 'orgUnit', type: 'TEXT' },
       { value: 'syncStatus', type: 'TEXT' },
