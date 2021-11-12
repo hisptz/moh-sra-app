@@ -47,6 +47,8 @@ import {
   CompletenessResponse,
 } from "../../models/completeness.model";
 import { NavController } from "ionic-angular";
+import { DataValue } from "../../models/data-value-upload-payload.model";
+import { DBCompleteResponse } from "../../models/db-complete-response.model";
 
 @Injectable()
 export class DataValuesProvider {
@@ -154,6 +156,48 @@ export class DataValuesProvider {
     );
   }
 
+  removeNotAllowedDataValues(
+    synchronizationDataValuePayload: SynchronizationDataValuePayload
+  ) {
+    return {
+      dataValues: _.filter(
+        synchronizationDataValuePayload.dataValues,
+        (dataValue: DataValue) => {
+          return dataValue.value !== "not-allowed";
+        }
+      ),
+    };
+  }
+
+  handleCheckBoxDataValueForOffline(
+    synchronizationDataValuePayload: SynchronizationDataValuePayload
+  ) {
+    return {
+      dataValues: _.map(
+        synchronizationDataValuePayload.dataValues,
+        (dataValue: DataValue) => {
+          return dataValue.value === "not-applicable"
+            ? { ..._.omit(dataValue, ["value"]), value: "", comment: "SRA" }
+            : dataValue;
+        }
+      ),
+    };
+  }
+
+  reverseEngineerCheckBoxDataValueForOffline(
+    sqLITEDataValues: SQLITEDataValue[]
+  ) {
+    return _.map(sqLITEDataValues, (sqLITEDataValue: SQLITEDataValue) => {
+      return sqLITEDataValue.value === "not-applicable"
+        ? {
+            ..._.omit(sqLITEDataValue, ["value"]),
+            value: "",
+            comment: "SRA",
+          }
+        : sqLITEDataValue;
+    });
+  }
+
   uploadDataValues(
     isCompleting: boolean,
     formattedDataValues: string[],
@@ -162,7 +206,8 @@ export class DataValuesProvider {
     synchronizationDataValuePayload?:
       | SynchronizationDataValuePayload
       | OfflineCompleteDataValuePayload,
-    completenessPayload?: CompletenessPayload
+    completenessPayload?: CompletenessPayload,
+    completeStatus?: boolean
   ): Observable<any> {
     let syncedDataValues = [];
     let importSummaries = {
@@ -177,8 +222,14 @@ export class DataValuesProvider {
           const url = `/api/dataValueSets.json?dataElementIdScheme=uid&orgUnitIdScheme=uid&importStrategy=CREATE_AND_UPDATE`;
           const completenessURL = `/api/completeDataSetRegistrations`;
 
+          const dbCompletenessURL = this.getDBCompletenessURL(
+            completenessPayload,
+            currentUser,
+            completeStatus ? "incomplete" : "complete"
+          );
+
           let message = "";
-          const dataValueSetsSubscription$: Subscription = this.httpClient
+          this.httpClient
             .post(url, synchronizationDataValuePayload, currentUser)
             .subscribe((importResponse: ImportResponse) => {
               if (importResponse && importResponse.status === (200 || 201)) {
@@ -239,90 +290,156 @@ export class DataValuesProvider {
                           });
                           observer.complete();
                         } else {
-                          const completenessSubscription$: Subscription =
+                          // TODO: For A Stable DHIS2 In Completing
+                          // const completenessSubscription$: Subscription =
+                          //   this.httpClient
+                          //     .post(
+                          //       completenessURL,
+                          //       completenessPayload,
+                          //       currentUser
+                          //     )
+                          //     .subscribe(
+                          //       (importResponse: ImportResponse) => {
+                          //         if (
+                          //           importResponse &&
+                          //           importResponse.status === (200 || 201)
+                          //         ) {
+                          //           if (
+                          //             completenessResponse &&
+                          //             completenessResponse.status === "SUCCESS"
+                          //           ) {
+                          //             if (
+                          //               importSummaries &&
+                          //               importSummaries.fail > 0
+                          //             ) {
+                          //               message = `${importSummaries.success} response(s) synced successfully, ${importSummaries.fail} failed`;
+                          //               this.appProvider.setTopNotification(
+                          //                 message
+                          //               );
+                          //             } else {
+                          //               if (
+                          //                 importSummaries &&
+                          //                 importSummaries.success &&
+                          //                 importSummaries.success > 0
+                          //               ) {
+                          //                 message = `${importSummaries.success} response(s) synced successfully`;
+                          //                 this.appProvider.setTopNotification(
+                          //                   message
+                          //                 );
+                          //               }
+                          //             }
+                          //             observer.next({
+                          //               importSummaries,
+                          //               importResponse,
+                          //             });
+                          //             observer.complete();
+                          //             if (dataValueSetsSubscription$) {
+                          //               dataValueSetsSubscription$.unsubscribe();
+                          //             }
+                          //           } else if (
+                          //             completenessResponse &&
+                          //             completenessResponse.status === "ERROR"
+                          //           ) {
+                          //             if (
+                          //               completenessResponse.conflicts &&
+                          //               completenessResponse.conflicts.length >
+                          //                 0
+                          //             ) {
+                          //               observer.next({
+                          //                 importSummaries,
+                          //                 importResponse,
+                          //               });
+                          //               observer.complete();
+                          //             } else {
+                          //               observer.next({
+                          //                 importSummaries,
+                          //                 importResponse,
+                          //               });
+                          //               observer.complete();
+                          //               this.appProvider.setNormalNotification(
+                          //                 "Error on Completing Dataset"
+                          //               );
+                          //             }
+                          //           } else {
+                          //             this.appProvider.setNormalNotification(
+                          //               "Error on Completing Dataset"
+                          //             );
+                          //           }
+                          //         } else {
+                          //           observer.next({
+                          //             importSummaries,
+                          //             importResponse,
+                          //           });
+                          //           observer.complete();
+
+                          //           if (completenessSubscription$) {
+                          //             completenessSubscription$.unsubscribe();
+                          //           }
+                          //         }
+                          //       },
+                          //       (error) => {
+                          //         if (error) {
+                          //           this.appProvider.setNormalNotification(
+                          //             "Error on Completing Dataset"
+                          //           );
+                          //         }
+                          //       }
+                          //     );
+                          // ToDo: For Non Stable System Using Direct Interaction With Database
+
+                          if (completenessPayload) {
                             this.httpClient
-                              .post(
-                                completenessURL,
-                                completenessPayload,
-                                currentUser
-                              )
+                              .get(dbCompletenessURL, true)
                               .subscribe(
-                                (importResponse: ImportResponse) => {
+                                (dbCompleteResponse: DBCompleteResponse) => {
                                   if (
-                                    importResponse &&
-                                    importResponse.status === (200 || 201)
+                                    dbCompleteResponse &&
+                                    dbCompleteResponse.listGrid &&
+                                    dbCompleteResponse.listGrid.rows &&
+                                    dbCompleteResponse.listGrid.rows.length >
+                                      0 &&
+                                    _.toLower(
+                                      dbCompleteResponse.listGrid.rows[0][0]
+                                    ) === "success"
                                   ) {
                                     if (
-                                      completenessResponse &&
-                                      completenessResponse.status === "SUCCESS"
+                                      importSummaries &&
+                                      importSummaries.fail > 0
                                     ) {
+                                      message = `${importSummaries.success} response(s) synced successfully, ${importSummaries.fail} failed`;
+                                      this.appProvider.setTopNotification(
+                                        message
+                                      );
+                                    } else {
                                       if (
                                         importSummaries &&
-                                        importSummaries.fail > 0
+                                        importSummaries.success &&
+                                        importSummaries.success > 0
                                       ) {
-                                        message = `${importSummaries.success} response(s) synced successfully, ${importSummaries.fail} failed`;
+                                        message = `${importSummaries.success} response(s) synced successfully`;
                                         this.appProvider.setTopNotification(
                                           message
                                         );
-                                      } else {
-                                        if (
-                                          importSummaries &&
-                                          importSummaries.success &&
-                                          importSummaries.success > 0
-                                        ) {
-                                          message = `${importSummaries.success} response(s) synced successfully`;
-                                          this.appProvider.setTopNotification(
-                                            message
-                                          );
-                                        }
                                       }
-                                      observer.next({
-                                        importSummaries,
-                                        importResponse,
-                                      });
-                                      observer.complete();
-                                      if (dataValueSetsSubscription$) {
-                                        dataValueSetsSubscription$.unsubscribe();
-                                      }
-                                    } else if (
-                                      completenessResponse &&
-                                      completenessResponse.status === "ERROR"
-                                    ) {
-                                      if (
-                                        completenessResponse.conflicts &&
-                                        completenessResponse.conflicts.length >
-                                          0
-                                      ) {
-                                        observer.next({
-                                          importSummaries,
-                                          importResponse,
-                                        });
-                                        observer.complete();
-                                      } else {
-                                        observer.next({
-                                          importSummaries,
-                                          importResponse,
-                                        });
-                                        observer.complete();
-                                        this.appProvider.setNormalNotification(
-                                          "Error on Completing Dataset"
-                                        );
-                                      }
-                                    } else {
-                                      this.appProvider.setNormalNotification(
-                                        "Error on Completing Dataset"
-                                      );
                                     }
-                                  } else {
+
                                     observer.next({
                                       importSummaries,
                                       importResponse,
+                                      dbCompleteResponse,
                                     });
                                     observer.complete();
+                                  } else {
+                                    this.appProvider.setNormalNotification(
+                                      "Error on Completing Dataset"
+                                    );
 
-                                    if (completenessSubscription$) {
-                                      completenessSubscription$.unsubscribe();
-                                    }
+                                    observer.next({
+                                      importSummaries,
+                                      importResponse,
+                                      dbCompleteResponse,
+                                    });
+                                    observer.complete();
                                   }
                                 },
                                 (error) => {
@@ -330,13 +447,23 @@ export class DataValuesProvider {
                                     this.appProvider.setNormalNotification(
                                       "Error on Completing Dataset"
                                     );
+                                    observer.error(error);
+                                    observer.complete();
                                   }
                                 }
                               );
+                          } else {
+                            observer.next({
+                              importSummaries,
+                              importResponse,
+                            });
+                            observer.complete();
+                          }
                         }
                       },
                       (error) => {
                         observer.error(error);
+                        observer.complete();
                       }
                     );
                 } else {
@@ -346,10 +473,6 @@ export class DataValuesProvider {
               } else {
                 observer.next({ importSummaries, importResponse: null });
                 observer.complete();
-
-                if (dataValueSetsSubscription$) {
-                  dataValueSetsSubscription$.unsubscribe();
-                }
               }
             });
         } else {
@@ -366,14 +489,28 @@ export class DataValuesProvider {
           synchronizationDataValuePayload.dataValues.length > 0
         ) {
           const url = `/api/dataValueSets`;
+
+          const updatedSynchronizationDataValuePayload: any =
+            this.handleCheckBoxDataValueForOffline(
+              synchronizationDataValuePayload
+            );
+
           let message = "";
           const dataValueSetsSubscription$: Subscription = this.httpClient
-            .post(url, synchronizationDataValuePayload, currentUser)
+            .post(
+              url,
+              this.removeNotAllowedDataValues(
+                updatedSynchronizationDataValuePayload
+              ),
+              currentUser
+            )
             .subscribe((importResponse: ImportResponse) => {
               if (importResponse && importResponse.status === (200 || 201)) {
                 const importSummary: ImportSummary = JSON.parse(
                   importResponse.data
                 ) as ImportSummary;
+
+                console.log("SUNGU::: 8", JSON.stringify(importSummary));
 
                 // Success Count
                 importSummaries.success =
@@ -405,11 +542,25 @@ export class DataValuesProvider {
                     }
                   );
 
+                  const nuno =
+                    this.reverseEngineerCheckBoxDataValueForOffline(
+                      processedDataValues
+                    );
+
+                  console.log("SUNGU::: PROCESSED 1 ", JSON.stringify(nuno));
+
+                  console.log(
+                    "SUNGU::: PROCESSED 2 ",
+                    JSON.stringify(processedDataValues)
+                  );
+
                   if (processedDataValues && processedDataValues.length > 0) {
                     this.sqlLite
                       .insertBulkDataOnTable(
                         this.resourceName,
-                        processedDataValues,
+                        this.reverseEngineerCheckBoxDataValueForOffline(
+                          processedDataValues
+                        ),
                         currentUser.currentDatabase
                       )
                       .subscribe(
@@ -538,6 +689,30 @@ export class DataValuesProvider {
     //       );
     //   });
     // });
+  }
+  getDBCompletenessURL(
+    completenessPayload?: CompletenessPayload,
+    currentUser?: CurrentUser,
+    strategy: string = ""
+  ) {
+    const orgUnit = _.trim(
+      completenessPayload.completeDataSetRegistrations[0].organisationUnit
+    );
+    const period = _.trim(
+      completenessPayload.completeDataSetRegistrations[0].period
+    );
+    const dataSet = _.trim(
+      completenessPayload.completeDataSetRegistrations[0].dataSet
+    );
+    const username =
+      currentUser && currentUser.username
+        ? currentUser.username
+        : currentUser && currentUser.name
+        ? currentUser.name
+        : "";
+    return strategy
+      ? `/api/sqlViews/pTmFMIhHevE/data.json?var=orgunit:${orgUnit}&var=datasetuid:${dataSet}&var=perioduid:${period}&var=storedby:${username}&var=strategy:${strategy}`
+      : "";
   }
 
   // ToDo: Improve loading local data during data upload and during data entry form opening
@@ -669,6 +844,7 @@ export class DataValuesProvider {
             cc: dataDimension.cc,
             cp: dataDimension.cp,
             value: dataValue.value,
+            comment: dataValue.value ? "" : "SRA",
             syncStatus: syncStatus,
             dataSetId: dataSetId,
             period: dataValue.period,

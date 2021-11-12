@@ -47,7 +47,41 @@
       <ion-row (tap)="backToPreviousView()">
         <ion-col>
           <div class="entry-selection-container">
-            <div>
+            <div class="container">
+              <table class="table table-bordered table-striped">
+                <tr>
+                  <th class="text-left note">
+                    <span [translate]="'Report Name'"></span>
+                  </th>
+                  <td class="text-muted font-weight-bold" colspan="4">
+                    <span><strong>{{ reportName }}</strong></span>
+                  </td>
+                </tr>
+                <tr
+                  *ngIf="selectedOrganisationUnit && selectedOrganisationUnit.id"
+                >
+                  <th class="text-left note">
+                    <span [translate]="'Organisation Unit'"></span>
+                  </th>
+                  <td class="text-muted font-weight-bold" colspan="4">
+                    <span
+                      ><strong
+                        >{{ selectedOrganisationUnit.name }}</strong
+                      ></span
+                    >
+                  </td>
+                </tr>
+                <tr *ngIf="selectedPeriod && selectedPeriod.name">
+                  <th class="text-left note">
+                    <span [translate]="'Period'"></span>
+                  </th>
+                  <td class="text-muted font-weight-bold" colspan="4">
+                    <span><strong>{{ selectedPeriod.name }}</strong></span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- <div>
               <b>
                 <span [translate]="'Report name'"></span>
               </b>
@@ -68,7 +102,7 @@
                 </b>
                 : {{ selectedPeriod.name }}</span
               >
-            </div>
+            </div> -->
           </div>
         </ion-col>
       </ion-row>

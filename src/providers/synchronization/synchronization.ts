@@ -37,7 +37,7 @@ import { DataSetCompletenessProvider } from "../data-set-completeness/data-set-c
 import { getStandardDataValuePayload } from "../../helpers/srt-data-value-payload.helper";
 import { SynchronizationDataValuePayload } from "../../models/data-value.model";
 import { NetworkAvailabilityProvider } from "../network-availability/network-availability";
-import { ModalController } from "ionic-angular";
+import { ModalController, NavController } from "ionic-angular";
 
 @Injectable()
 export class SynchronizationProvider {
@@ -56,7 +56,7 @@ export class SynchronizationProvider {
     private profileProvider: ProfileProvider,
     private dataSetCompletenessProvider: DataSetCompletenessProvider,
     private networkAvailabilityProvider: NetworkAvailabilityProvider,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
   ) {}
 
   stopSynchronization() {
@@ -396,6 +396,9 @@ export class SynchronizationProvider {
       //   importSummaries: this.importSummaries,
       //   keys: keys,
       // });
+
+      // }
+
       let modal = this.modalCtrl.create("ImportSummariesPage", {
         importResponseSummary: importSummaries,
         keys: keys,

@@ -97,38 +97,40 @@
                       {{ importSummaries[key].fail }}
                     </td>
                   </tr>
-                  <tr
-                    *ngIf="importSummaries[key].errorMessages && importSummaries[key].errorMessages.length > 0"
-                  >
-                    <th [attr.colspan]="'4'">
-                      <span
-                        [translate]="'Data Import/Synchronisation Conflicts or Errors'"
-                      ></span>
-                    </th>
-                  </tr>
-                  <tr>
-                    <td [attr.colspan]="'2'">
-                      <span [translate]="'Error Object'"></span>
-                    </td>
-                    <td [attr.colspan]="'2'">
-                      <span [translate]="'Error Info'"></span>
-                    </td>
-                  </tr>
-                  <tr
-                    *ngFor="let errorMessage of importSummaries[key].errorMessages"
-                  >
-                    <td [attr.colspan]="'2'">{{ errorMessage?.object }}</td>
-                    <td [attr.colspan]="'2'">{{ errorMessage?.value }}</td>
-                  </tr>
-                  <tr
-                    *ngIf="importSummaries[key].errorMessages && importSummaries[key].errorMessages.length > 0"
-                  >
-                    <th [attr.colspan]="'4'">
-                      <span
-                        [translate]="'Send This Information To SRA Technical Team'"
-                      ></span>
-                    </th>
-                  </tr>
+                  <ng-container *ngIf="importSummaries[key].fail > 0">
+                    <tr
+                      *ngIf="importSummaries[key].errorMessages && importSummaries[key].errorMessages.length > 0"
+                    >
+                      <th [attr.colspan]="'4'">
+                        <span
+                          [translate]="'Data Import/Synchronisation Conflicts or Errors'"
+                        ></span>
+                      </th>
+                    </tr>
+                    <tr>
+                      <td [attr.colspan]="'2'">
+                        <span [translate]="'Error Object'"></span>
+                      </td>
+                      <td [attr.colspan]="'2'">
+                        <span [translate]="'Error Info'"></span>
+                      </td>
+                    </tr>
+                    <tr
+                      *ngFor="let errorMessage of importSummaries[key].errorMessages"
+                    >
+                      <td [attr.colspan]="'2'">{{ errorMessage?.object }}</td>
+                      <td [attr.colspan]="'2'">{{ errorMessage?.value }}</td>
+                    </tr>
+                    <tr
+                      *ngIf="importSummaries[key].errorMessages && importSummaries[key].errorMessages.length > 0"
+                    >
+                      <th [attr.colspan]="'4'">
+                        <span
+                          [translate]="'Send This Information To SRA Technical Team'"
+                        ></span>
+                      </th>
+                    </tr>
+                  </ng-container>
                 </tbody>
               </table>
             </div>

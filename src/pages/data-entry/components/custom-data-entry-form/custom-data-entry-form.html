@@ -43,7 +43,7 @@
               (tap)="updateDataSetCompleteness()"
             >
               <span
-                [translate]="isDataSetCompletenessProcessRunning && !isDataSetCompleted? 'Completing' : 'Complete'"
+                [translate]="isDataSetCompletenessProcessRunning && !isDataSetCompleted? 'Completing...' : 'Mark Assessment As Completed'"
               ></span>
             </button>
             <loading
@@ -62,7 +62,7 @@
               (tap)="updateDataSetCompleteness()"
             >
               <span
-                [translate]="isDataSetCompletenessProcessRunning && isDataSetCompleted? 'Undo completing' : 'Undo complete'"
+                [translate]="isDataSetCompletenessProcessRunning && isDataSetCompleted? 'Cancelling...' : 'Cancel Completed Assessment'"
               ></span>
             </button>
             <loading
@@ -98,9 +98,9 @@
           padding-top
           (click)="viewUserCompletenessInformation(dataSetsCompletenessInfo)"
         >
-          <span [translate]="'Completed by'"></span>
-          <b>{{ dataSetsCompletenessInfo.storedBy }}</b> {{ 'on' | translate }}
-          <b>{{ dataSetsCompletenessInfo.date }}</b>
+          <span [translate]="'Form Has Been Completed By: '"></span>
+          <b>{{ dataSetsCompletenessInfo?.storedBy }}</b> {{ 'on' | translate }}
+          <b>{{ dataSetsCompletenessInfo?.date }}</b>
         </div>
       </div>
     </div>

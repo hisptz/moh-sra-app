@@ -30,19 +30,85 @@
   </ion-navbar>
 </ion-header>
 
+<!-- class="item-card"
+          full
+          padding-bottom
+          padding-top -->
+
 <ion-content>
   <ion-grid>
     <ion-row>
       <ion-col>
-        <div
-          *ngIf="entryFormParameter"
-          class="item-card"
-          full
-          padding-bottom
-          padding-top
-        >
+        <div *ngIf="entryFormParameter">
           <div (tap)="goBack()">
-            <b>
+            <table class="table table-bordered table-striped">
+              <tr>
+                <th class="text-left note">
+                  <span [translate]="'Organisation Unit'"></span>
+                </th>
+                <td class="text-muted" colspan="4">
+                  <span>{{ entryFormParameter.orgUnit.name }}</span>
+                </td>
+              </tr>
+              <tr>
+                <th class="text-left note">
+                  <span [translate]="'Tool/Form'"></span>
+                </th>
+                <td class="text-muted" colspan="4">
+                  <span>{{ entryFormParameter.dataSet.name }}</span>
+                </td>
+              </tr>
+              <tr>
+                <th class="text-center note">
+                  <span [translate]="'Period'"></span>
+                </th>
+                <td class="text-muted" colspan="4">
+                  <span>{{ entryFormParameter.period.name }}</span>
+                </td>
+              </tr>
+              <tr>
+                <th class="text-muted note">
+                  <span [translate]="'Synced'"></span>
+                </th>
+                <td class="success synced">
+                  <strong><span>{{ storageStatus.online }}</span></strong>
+                </td>
+                <th class="text-muted note">
+                  <span [translate]="'Not Synced'"></span>
+                </th>
+                <td class="danger not-synced">
+                  <strong><span>{{storageStatus.offline }}</span></strong>
+                </td>
+              </tr>
+              <br />
+              <tr *ngIf="isPeriodLocked">
+                <td class="lock-form" colspan="4">
+                  <span padding-left>
+                    <span
+                      [translate]="'Entry form has been locked for this period'"
+                    ></span>
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="isDataSetCompletedAndLocked">
+                <td class="completed-form" colspan="4">
+                  <span padding-left>
+                    <span
+                      [translate]="'Entry form has been COMPLETED for this period'"
+                    ></span>
+                  </span>
+                </td>
+              </tr>
+              <br />
+              <tr *ngIf="isDataSetCompletedAndLocked">
+                <th class="note">Completed By</th>
+                <td>{{ dataSetsCompletenessInfo?.storedBy }}</td>
+                <th class="note">Completion Date</th>
+                <td>{{ dataSetsCompletenessInfo?.date }}</td>
+              </tr>
+              <br>
+            </table>
+            <!-- <b>
               <span [translate]="'Organisation unit'"></span>
             </b>
             : {{ entryFormParameter.orgUnit.name }}
@@ -66,8 +132,8 @@
                 <span [translate]="'Not synced'"></span>
               </b>
               : {{storageStatus.offline }}</span
-            >
-            <span *ngIf="isPeriodLocked">
+            > -->
+            <!-- <span *ngIf="isPeriodLocked">
               <br /><br />
               <span padding-left class="item-card lock-form">
                 <span
@@ -82,7 +148,7 @@
                   [translate]="'Entry form has been COMPLETED for this period'"
                 ></span>
               </span>
-            </span>
+            </span> -->
           </div>
           <aggregate-conflict-handler
             [isPeriodLocked]="isPeriodLocked"

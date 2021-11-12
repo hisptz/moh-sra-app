@@ -113,7 +113,7 @@ export class LoginPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     const defaultCurrentUser: CurrentUser = {
-      serverUrl: 'https://dhis.udsm-hmis.org/dhis2testupgrade', // 'https://tland.hisptz.org/dhistztland' 'https://dhis.hisptz.org/edsmobile', //'dhis.hisptz.org/eds', // 'ssudanhis.org', //'play.dhis2.org/2.28',
+      serverUrl: 'https://dhis.moh.go.tz/',
       username: '', // 'boma',
       password: '', // 'Boma_2018',
       currentLanguage: 'en',

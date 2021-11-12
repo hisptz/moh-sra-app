@@ -21,15 +21,15 @@
  * @author Joseph Chingalo <profschingalo@gmail.com>
  *
  */
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { ActionSheetController } from 'ionic-angular';
-import * as _ from 'lodash';
-import { DataValuesProvider } from '../../../../providers/data-values/data-values';
-import { AppTranslationProvider } from '../../../../providers/app-translation/app-translation';
-import { UserProvider } from '../../../../providers/user/user';
-import { DataEntryFormProvider } from '../../../../providers/data-entry-form/data-entry-form';
-import { DataSetCompletenessProvider } from '../../../../providers/data-set-completeness/data-set-completeness';
-import { AppProvider } from '../../../../providers/app/app';
+import { Component, Input, OnInit, Output, EventEmitter } from "@angular/core";
+import { ActionSheetController } from "ionic-angular";
+import * as _ from "lodash";
+import { DataValuesProvider } from "../../../../providers/data-values/data-values";
+import { AppTranslationProvider } from "../../../../providers/app-translation/app-translation";
+import { UserProvider } from "../../../../providers/user/user";
+import { DataEntryFormProvider } from "../../../../providers/data-entry-form/data-entry-form";
+import { DataSetCompletenessProvider } from "../../../../providers/data-set-completeness/data-set-completeness";
+import { AppProvider } from "../../../../providers/app/app";
 
 /**
  * Generated class for the AggregateConflictHandlerComponent component.
@@ -38,8 +38,8 @@ import { AppProvider } from '../../../../providers/app/app';
  * Components.
  */
 @Component({
-  selector: 'aggregate-conflict-handler',
-  templateUrl: 'aggregate-conflict-handler.html'
+  selector: "aggregate-conflict-handler",
+  templateUrl: "aggregate-conflict-handler.html",
 })
 export class AggregateConflictHandlerComponent implements OnInit {
   @Input() orgUnitId;
@@ -69,14 +69,14 @@ export class AggregateConflictHandlerComponent implements OnInit {
     private actionSheetCtrl: ActionSheetController
   ) {
     this.isLoading = true;
-    this.loadingMessage = '';
+    this.loadingMessage = "";
     this.summaryObject = {
       updates: [],
-      conflicts: []
+      conflicts: [],
     };
     this.icons = {
-      accept: 'assets/icon/tick.png',
-      decline: 'assets/icon/cancel.png'
+      accept: "assets/icon/tick.png",
+      decline: "assets/icon/cancel.png",
     };
   }
 
@@ -84,26 +84,27 @@ export class AggregateConflictHandlerComponent implements OnInit {
     const transalationStrings = this.getValuesToTranslate();
     this.translationProvider
       .getTransalations(transalationStrings)
-      .subscribe(data => {
+      .subscribe((data) => {
         this.translationMapper = data;
       });
     if (this.orgUnitId && this.dataSetId && this.period && this.dataDimension) {
-      let key = 'Discovering data from the server';
+      let key = "Discovering data from the server";
       this.loadingMessage = this.translationMapper[key]
         ? this.translationMapper[key]
         : key;
       this.userProvider.getCurrentUser().subscribe(
-        currentUser => {
+        (currentUser) => {
           this.dataEntryFormProvider
             .loadingDataSetInformation(this.dataSetId, currentUser)
             .subscribe(
-              dataSetInformation => {
+              (dataSetInformation) => {
                 const { dataSet } = dataSetInformation;
                 if (dataSet && dataSet.id) {
-                  const dataSetAttributeOptionCombo = this.dataValuesProvider.getDataValuesSetAttributeOptionCombo(
-                    this.dataDimension,
-                    dataSet.categoryCombo.categoryOptionCombos
-                  );
+                  const dataSetAttributeOptionCombo =
+                    this.dataValuesProvider.getDataValuesSetAttributeOptionCombo(
+                      this.dataDimension,
+                      dataSet.categoryCombo.categoryOptionCombos
+                    );
                   this.dataValuesProvider
                     .getDataValueSetFromServer(
                       this.dataSetId,
@@ -113,12 +114,12 @@ export class AggregateConflictHandlerComponent implements OnInit {
                       currentUser
                     )
                     .subscribe(
-                      dataValues => {
+                      (dataValues) => {
                         this.updateSummaryObject(
                           dataValues,
                           this.dataValuesObject
                         );
-                        key = 'Discovering entry form completeness information';
+                        key = "Discovering entry form completeness information";
                         this.loadingMessage = this.translationMapper[key]
                           ? this.translationMapper[key]
                           : key;
@@ -131,11 +132,14 @@ export class AggregateConflictHandlerComponent implements OnInit {
                             currentUser
                           )
                           .subscribe(
-                            dataSetCompletenessInfo => {
+                            (dataSetCompletenessInfo) => {
                               this.dataSetCompletenessInfoAction.emit(
                                 dataSetCompletenessInfo
                               );
-                              console.log('CAINAMIST DATASET COMPLETENESS URL::: ' + JSON.stringify(dataSetCompletenessInfo));
+                              console.log(
+                                "CAINAMIST DATASET COMPLETENESS URL::: " +
+                                  JSON.stringify(dataSetCompletenessInfo)
+                              );
 
                               this.isLoading = false;
                               if (this.dataValuesObject) {
@@ -145,16 +149,16 @@ export class AggregateConflictHandlerComponent implements OnInit {
                                 );
                               }
                             },
-                            error => {
+                            (error) => {
                               this.isLoading = false;
-                              // ToDo: Improve The Approach 
+                              // ToDo: Improve The Approach
                               // this.appProvider.setNormalNotification(
                               //   'Failed to discover entry form completeness information'
                               // );
                             }
                           );
                       },
-                      error => {
+                      (error) => {
                         this.isLoading = false;
                       }
                     );
@@ -162,12 +166,12 @@ export class AggregateConflictHandlerComponent implements OnInit {
                   this.isLoading = false;
                 }
               },
-              error => {
+              (error) => {
                 this.isLoading = false;
               }
             );
         },
-        error => {
+        (error) => {
           this.isLoading = false;
         }
       );
@@ -175,17 +179,17 @@ export class AggregateConflictHandlerComponent implements OnInit {
   }
 
   updateSummaryObject(onlineDataValues, dataValuesObject) {
-    _.map(onlineDataValues, dataValue => {
+    _.map(onlineDataValues, (dataValue) => {
       if (dataValue.categoryOptionCombo && dataValue.dataElement) {
-        const id = dataValue.dataElement + '-' + dataValue.categoryOptionCombo;
+        const id = dataValue.dataElement + "-" + dataValue.categoryOptionCombo;
         const onlineDataValueObject = {
           id: id,
           value: dataValue.value,
-          status: 'synced'
+          status: "synced",
         };
         if (dataValuesObject[id]) {
           const offlineDataValueObject = dataValuesObject[id];
-          offlineDataValueObject.value += '';
+          offlineDataValueObject.value += "";
           if (offlineDataValueObject.value !== onlineDataValueObject.value) {
             this.summaryObject.conflicts.push(onlineDataValueObject);
           }
@@ -195,62 +199,70 @@ export class AggregateConflictHandlerComponent implements OnInit {
       }
     });
     if (this.summaryObject.conflicts.length > 0) {
-      this.appProvider.setTopNotification(
-        'There are conflicts between offline and online data have been found, that needs your attention'
-      );
+      // ToDO: START: Improved Approach
+      // this.appProvider.setTopNotification(
+      //   "There are conflicts between offline and online data have been found, that needs your attention"
+      // );
+      // ToDO: END: Improved Approach
+
+      this.conflictHandlingAction("conflicts", "accept");
       this.conflictFoundAction.emit();
     }
     if (this.summaryObject.updates.length > 0) {
       this.appProvider.setTopNotification(
-        'New updates has been found form server and have been applied success on offline storage'
+        "New updates has been found form server and have been applied success on offline storage"
       );
-      const key = 'updates';
+      const key = "updates";
       this.applyingDataToOffline(key);
       this.conflictFoundAction.emit();
     }
   }
 
   conflictHandlingAction(key, action) {
-    if (action === 'accept') {
-      const actionSheet = this.actionSheetCtrl.create({
-        title: this.translationMapper[
-          'You are about to replace offline data with data from the server, are you sure?'
-        ],
-        buttons: [
-          {
-            text: this.translationMapper['Yes'],
-            handler: () => {
-              this.applyingDataToOffline(key, action);
-            }
-          },
-          {
-            text: this.translationMapper['No'],
-            handler: () => {}
-          }
-        ]
-      });
-      actionSheet.present();
+    if (action === "accept") {
+      // ToDO: START: Improved Approach
+      // const actionSheet = this.actionSheetCtrl.create({
+      //   title: this.translationMapper[
+      //     'You are about to replace offline data with data from the server, are you sure?'
+      //   ],
+      //   buttons: [
+      //     {
+      //       text: this.translationMapper['Yes'],
+      //       handler: () => {
+      //         this.applyingDataToOffline(key, action);
+      //       }
+      //     },
+      //     {
+      //       text: this.translationMapper['No'],
+      //       handler: () => {}
+      //     }
+      //   ]
+      // });
+      // actionSheet.present();
+      // ToDO: END: Improved Approach
+      this.applyingDataToOffline(key, action);
     }
-    if (action === 'decline') {
+    if (action === "decline") {
       const actionSheet = this.actionSheetCtrl.create({
-        title: this.translationMapper[
-          'You are about to discard data from server, are you sure?'
-        ],
+        title:
+          this.translationMapper[
+            "You are about to discard data from server, are you sure?"
+          ],
         buttons: [
           {
-            text: this.translationMapper['Yes'],
+            text: this.translationMapper["Yes"],
             handler: () => {
               if (this.summaryObject[key]) {
                 this.summaryObject[key] = [];
                 this.applyingDataToOffline(key, action);
               }
-            }
+            },
           },
           {
-            text: this.translationMapper['No'],
-            handler: () => {}
-          }
-        ]
+            text: this.translationMapper["No"],
+            handler: () => {},
+          },
+        ],
       });
       actionSheet.present();
     }
@@ -260,7 +272,7 @@ export class AggregateConflictHandlerComponent implements OnInit {
     if (this.summaryObject[key]) {
       this.mergeDataAction.emit({
         dataValues: this.summaryObject[key],
-        action
+        action,
       });
       this.summaryObject[key] = [];
     }
@@ -268,13 +280,13 @@ export class AggregateConflictHandlerComponent implements OnInit {
 
   getValuesToTranslate() {
     return [
-      'Discovering data from the server',
-      'You are about to apply new updates to the from the server, are you sure?',
-      'You are about to replace offline data with data from the server, are you sure?',
-      'You are about to discard data from server, are you sure?',
-      'Discovering entry form completeness information',
-      'Yes',
-      'No'
+      "Discovering data from the server",
+      "You are about to apply new updates to the from the server, are you sure?",
+      "You are about to replace offline data with data from the server, are you sure?",
+      "You are about to discard data from server, are you sure?",
+      "Discovering entry form completeness information",
+      "Yes",
+      "No",
     ];
   }
 }

@@ -178,18 +178,12 @@ export class DataEntryFormPage implements OnInit {
               )
               .subscribe(
                 (completenessConfiguration: CompletenessConfiguration) => {
-                  if (completenessConfiguration) {
-                    console.log(
-                      "CAINAMIST::: ",
-                      JSON.stringify(completenessConfiguration)
-                    );
-                    this.isDataSetCompletedAndLocked =
-                      completenessConfiguration &&
-                      completenessConfiguration.complete
-                        ? completenessConfiguration.complete
-                        : false;
+                  if (completenessConfiguration && completenessConfiguration.complete) {
+                    this.isDataSetCompletedAndLocked = completenessConfiguration.complete;
+                    this.isDataSetCompleted = completenessConfiguration.complete;
                   } else {
                     this.isDataSetCompletedAndLocked = false;
+                    this.isDataSetCompleted = false
                   }
                 }
               );
@@ -412,6 +406,10 @@ export class DataEntryFormPage implements OnInit {
         this.dataSetsCompletenessInfo = dataSetCompleteness;
         if (dataSetCompleteness && dataSetCompleteness.complete) {
           this.isDataSetCompleted = true;
+          this.isDataSetCompletedAndLocked = true;
+        } else {
+          this.isDataSetCompleted = false;
+          this.isDataSetCompletedAndLocked = false;
         }
       });
   }
@@ -743,12 +741,6 @@ export class DataEntryFormPage implements OnInit {
             }
           );
 
-          console.log("CAINAMIST::: ", JSON.stringify(status));
-          console.log(
-            "CAINAMIST::: FIELDS ",
-            JSON.stringify(violatedMandatoryFields)
-          );
-
           if (violatedMandatoryFields && violatedMandatoryFields.length > 0) {
             this.navCtrl.push("CompulsoryNotificationPage", {
               compulsoryFields: violatedMandatoryFields,
@@ -756,14 +748,6 @@ export class DataEntryFormPage implements OnInit {
           }
 
           this.isDataSetCompletenessProcessRunning = false;
-
-          // ! DEPRECATED APPROACH OF TOASTING A LIST OF VIOLATED FIELDS
-          // const message = `${fieldNames.join(",")} ${
-          //   fieldNames.length > 1 ? "are" : "is"
-          // }  mandatory field${
-          //   fieldNames.length > 1 ? "s" : ""
-          // }, plaese enter data before complete this form`;
-          // this.appProvider.setTopNotification(message);
         } else {
           this.uploadDataValuesOnComplete(
             period,
@@ -914,10 +898,11 @@ export class DataEntryFormPage implements OnInit {
                   processedDataValues,
                   this.currentUser,
                   offlineCompleteDataValuePayload,
-                  completenessPayload
+                  completenessPayload,
+                  completeStatus
                 )
                 .subscribe(
-                  ({ importSummaries, importResponse }) => {
+                  ({ importSummaries, importResponse, dbCompleteResponse }) => {
                     const shortImportSummary: ShortImportSummary =
                       importSummaries;
                     const mImportResponse: ImportResponse = importResponse;
@@ -936,47 +921,84 @@ export class DataEntryFormPage implements OnInit {
                             ? JSON.parse(mImportResponse.data).conflicts
                             : [],
                       });
-                      // ToDO: Improve The Approach
-                      console.log(
-                        "CAINAM NOTIFICATION::: " +
-                          JSON.stringify(shortImportSummary.errorMessages)
-                      );
                     } else {
                       if (
                         mImportResponse &&
                         mImportResponse.status === (200 || 201)
                       ) {
-                        const completenessResponse: CompletenessResponse =
-                          JSON.parse(
-                            mImportResponse.data
-                          ) as CompletenessResponse;
-
-                        if (
-                          completenessResponse &&
-                          completenessResponse.status === "ERROR"
-                        ) {
+                        if (dbCompleteResponse) {
+                          // ToDO: Improve The Approach
                           if (
-                            completenessResponse.conflicts &&
-                            completenessResponse.conflicts.length > 0
+                            dbCompleteResponse &&
+                            dbCompleteResponse.listGrid &&
+                            dbCompleteResponse.listGrid.rows &&
+                            dbCompleteResponse.listGrid.rows.length > 0 &&
+                            _.toLower(
+                              dbCompleteResponse.listGrid.rows[0][0]
+                            ) === "success"
                           ) {
-                            this.navCtrl.push("ConflictNotificationPage", {
-                              conflicts: completenessResponse.conflicts,
-                            });
+                            this.isDataSetCompletedAndLocked = !completeStatus;
+                            this.storageStatus.offline = 0;
+                            this.storageStatus.online +=
+                              sqliteDataValues.length;
+                            this.appProvider.setNormalNotification(
+                              `Data set ${
+                                !completeStatus ? "COMPLETED" : "UN-COMPLETED"
+                              } successfully`
+                            );
+                            console.log("Success uploading data");
+                            observer.next(mImportResponse);
+                            observer.complete();
+                          } else {
+                            const completenessResponse: CompletenessResponse =
+                              JSON.parse(
+                                mImportResponse.data
+                              ) as CompletenessResponse;
+                            if (
+                              completenessResponse.conflicts &&
+                              completenessResponse.conflicts.length > 0
+                            ) {
+                              this.navCtrl.push("ConflictNotificationPage", {
+                                conflicts: completenessResponse.conflicts,
+                              });
+                            }
+                            observer.next(mImportResponse);
+                            observer.complete();
                           }
-                          observer.next(mImportResponse);
-                          observer.complete();
                         } else {
-                          this.isDataSetCompletedAndLocked = !completeStatus;
-                          this.storageStatus.offline = 0;
-                          this.storageStatus.online += sqliteDataValues.length;
-                          this.appProvider.setNormalNotification(
-                            `Data set ${
-                              !completeStatus ? "COMPLETED" : "UN-COMPLETED"
-                            } successfully`
-                          );
-                          console.log("Success uploading data");
-                          observer.next(mImportResponse);
-                          observer.complete();
+                          const completenessResponse: CompletenessResponse =
+                            JSON.parse(
+                              mImportResponse.data
+                            ) as CompletenessResponse;
+
+                          if (
+                            completenessResponse &&
+                            completenessResponse.status === "ERROR"
+                          ) {
+                            if (
+                              completenessResponse.conflicts &&
+                              completenessResponse.conflicts.length > 0
+                            ) {
+                              this.navCtrl.push("ConflictNotificationPage", {
+                                conflicts: completenessResponse.conflicts,
+                              });
+                            }
+                            observer.next(mImportResponse);
+                            observer.complete();
+                          } else {
+                            this.isDataSetCompletedAndLocked = !completeStatus;
+                            this.storageStatus.offline = 0;
+                            this.storageStatus.online +=
+                              sqliteDataValues.length;
+                            this.appProvider.setNormalNotification(
+                              `Data set ${
+                                !completeStatus ? "COMPLETED" : "UN-COMPLETED"
+                              } successfully`
+                            );
+                            console.log("Success uploading data");
+                            observer.next(mImportResponse);
+                            observer.complete();
+                          }
                         }
                       }
                     }
