@@ -26,6 +26,7 @@ import { Observable } from "rxjs/Observable";
 import * as _ from "lodash";
 import { CurrentUser } from "../../models";
 import { SqlLiteProvider } from "../sql-lite/sql-lite";
+import { CompleteDataSetRegistration } from "../../models/completeness.model";
 
 @Injectable()
 export class OfflineCompletenessProvider {
@@ -221,14 +222,14 @@ export class OfflineCompletenessProvider {
   offlneEntryFormCompleteness(
     entryFormSelection: any,
     currentUser: CurrentUser,
-    dataSetCompletenessInfo?: any
+    dataSetCompletenessInfo?: CompleteDataSetRegistration
   ): Observable<any> {
     const { selectedOrgUnit, selectedDataSet, selectedPeriod, dataDimension } =
       entryFormSelection;
     const dataSetId = selectedDataSet.id;
     const periodId = selectedPeriod.iso;
     const organisationUnitId = selectedOrgUnit.id;
-    const isDeleted = false;
+    const isDeleted = dataSetCompletenessInfo.completed;
     const type = "aggregate";
     const status = "not-sync";
     const completedBy =
@@ -240,11 +241,8 @@ export class OfflineCompletenessProvider {
         ? dataSetCompletenessInfo.date
         : new Date().toISOString().split("T")[0];
     const id = this.getEntryFormConpletenessDataId(entryFormSelection);
+
     return new Observable((observer) => {
-      console.log(
-        "MAMA NDOGO SAVING ENTRY FORM COMPLETENESS OFFLINE COMPLETENESS:::",
-        JSON.stringify("SAVING ON FORM OPENING")
-      );
       this.savingOfflineCompleteness(
         [
           {
@@ -263,11 +261,61 @@ export class OfflineCompletenessProvider {
         currentUser
       ).subscribe(
         () => {
-          observer.next({
-            storedBy: completedBy,
-            date: completedDate,
-            complete: true,
-          });
+          observer.next(dataSetCompletenessInfo);
+          observer.complete();
+        },
+        (error) => {
+          observer.error(error);
+        }
+      );
+    });
+  }
+
+  savingOfflineEntryFormCompletenessOnFormOpening(
+    currentUser: CurrentUser,
+    dataSetId: string,
+    periodId: string,
+    organisationUnitId: string,
+    dataSetCompletenessInfo?: CompleteDataSetRegistration
+  ): Observable<any> {
+    const id = _.trim(`${dataSetId}_${organisationUnitId}_${periodId}`);
+    const isDeleted = dataSetCompletenessInfo.completed;
+    const type = "aggregate";
+    const status = "not-sync";
+    const dataDimension = {
+      cc: "zieTL0JUp1o",
+      cp: "",
+    };
+
+    const completedBy =
+      dataSetCompletenessInfo && dataSetCompletenessInfo.storedBy
+        ? dataSetCompletenessInfo.storedBy
+        : currentUser.username;
+    const completedDate =
+      dataSetCompletenessInfo && dataSetCompletenessInfo.date
+        ? dataSetCompletenessInfo.date
+        : new Date().toISOString().split("T")[0];
+
+    return new Observable((observer) => {
+      this.savingOfflineCompleteness(
+        [
+          {
+            id,
+            dataDimension,
+            periodId,
+            dataSetId,
+            organisationUnitId,
+            status,
+            isDeleted,
+            type,
+            completedBy,
+            completedDate,
+          },
+        ],
+        currentUser
+      ).subscribe(
+        () => {
+          observer.next(dataSetCompletenessInfo);
           observer.complete();
         },
         (error) => {

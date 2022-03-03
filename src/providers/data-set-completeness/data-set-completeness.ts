@@ -27,6 +27,10 @@ import { Observable } from "rxjs/Observable";
 import * as _ from "lodash";
 import { CurrentUser } from "../../models";
 import { OfflineCompletenessProvider } from "../offline-completeness/offline-completeness";
+import {
+  CompleteDataSetRegistration,
+  DataSetRegistrationPayload,
+} from "../../models/completeness.model";
 
 @Injectable()
 export class DataSetCompletenessProvider {
@@ -58,7 +62,7 @@ export class DataSetCompletenessProvider {
 
   async discoverAndUpdateEntryFormCompletenessInfo(
     entryFormSelection: any,
-    dataSetCompletenessInfo: any,
+    dataSetCompletenessInfo: CompleteDataSetRegistration,
     currentUser: CurrentUser
   ) {
     const id =
@@ -70,20 +74,17 @@ export class DataSetCompletenessProvider {
       .toPromise();
     // @TODO take handlig preference from setting default is device
     if (offlineData && offlineData.length > 0) {
-      const data = {
+      const offlineDataSetCompleteness = {
         ...offlineData[0],
         isDeleted: JSON.parse(offlineData[0].isDeleted),
       };
-      const { completedDate, completedBy, isDeleted } = data;
+
       dataSetCompletenessInfo = {
         ...dataSetCompletenessInfo,
-        complete: !isDeleted,
-        storedBy: completedBy,
-        date: completedDate,
       };
     } else {
-      const { complete } = dataSetCompletenessInfo;
-      if (complete) {
+      const { completed } = dataSetCompletenessInfo;
+      if (completed) {
         try {
           dataSetCompletenessInfo = await this.offlineCompletenessProvider
             .offlneEntryFormCompleteness(
@@ -126,8 +127,8 @@ export class DataSetCompletenessProvider {
       data,
       (dataObject) => !dataObject.isDeleted && dataObject.status === status
     );
-    await this.completeEntryFormsOnline(completedData, currentUser);
-    await this.unCompleteEntryFormsOnline(unCompletedData, currentUser);
+    // await this.completeEntryFormsOnline(completedData, currentUser);
+    // await this.unCompleteEntryFormsOnline(unCompletedData, currentUser);
   }
 
   async completeEntryFormsOnline(completedData: any, currentUser: CurrentUser) {
@@ -247,35 +248,91 @@ export class DataSetCompletenessProvider {
     dataDimension: any,
     currentUser: CurrentUser
   ): Observable<any> {
-    let parameter = `dataSetId=${dataSetId}&periodId=${period}&organisationUnitId=${orgUnitId}`;
-    if (dataDimension.cp != "") {
-      parameter += `&cc=${dataDimension.cc}&cp=${dataDimension.cp}`;
-    }
-    const url = "/dhis-web-dataentry/getDataValues.action?" + parameter;
+    if (dataSetId && period && orgUnitId && currentUser) {
+      const params = `dataSet=${dataSetId}&period=${period}&orgUnit=${orgUnitId}`;
+      const url = "completeDataSetRegistrations.json?" + params;
 
-    console.log('CAINAMIST DATASET COMPLETENESS URL::: ' + JSON.stringify(url));
+      // ! START::: DEPRECATED: OLD WAY OF RETRIVING DATASET REGISTRATION INFO
+      // let parameter = `periodId=${period}&dataSetId=${dataSetId}&organisationUnitId=${orgUnitId}`;
+      // if (dataDimension.cp != "") {
+      //   parameter += `&cc=${dataDimension.cc}&cp=${dataDimension.cp}`;
+      // }
+      // const url = "/dhis-web-dataentry/getDataValues.action?" + parameter;
+      // ! END::: DEPRECATED: OLD WAY OF RETRIVING DATASET REGISTRATION INFO
 
-    return new Observable((observer) => {
-      this.httpClient.get(url, true, currentUser).subscribe(
-        (response: any) => {
-          if (response && response.dataValues) {
-            delete response.dataValues;
+      return new Observable((observer) => {
+        this.httpClient.get(url, true, currentUser).subscribe(
+          (dataSetRegistrationPayload: DataSetRegistrationPayload) => {
+            const dataSetRegistrationPayloadKeys: string[] = _.keys(
+              dataSetRegistrationPayload
+            );
+
+            if (
+              dataSetRegistrationPayload &&
+              dataSetRegistrationPayloadKeys &&
+              dataSetRegistrationPayloadKeys.length
+            ) {
+              const completeRegistrations: CompleteDataSetRegistration[] =
+                _.filter(
+                  dataSetRegistrationPayload["completeDataSetRegistrations"],
+                  (
+                    completeDataSetRegistration: CompleteDataSetRegistration
+                  ) => {
+                    return (
+                      completeDataSetRegistration.dataSet === dataSetId &&
+                      completeDataSetRegistration.period === period &&
+                      completeDataSetRegistration.organisationUnit === orgUnitId
+                    );
+                  }
+                );
+
+              if (completeRegistrations && completeRegistrations.length) {
+                observer.next(_.head(completeRegistrations));
+                observer.complete();
+              } else {
+                observer.next(
+                  this.getDataseSetRegistrationsTemplate(
+                    dataSetId,
+                    orgUnitId,
+                    period
+                  )
+                );
+                observer.complete();
+              }
+            } else {
+              observer.next(
+                this.getDataseSetRegistrationsTemplate(
+                  dataSetId,
+                  orgUnitId,
+                  period
+                )
+              );
+              observer.complete();
+            }
+          },
+          (error) => {
+            observer.error(error);
           }
-
-          console.log('CAINAMIST DATASET COMPLETENESS::: ' + JSON.stringify(response));
-
-          observer.next(response);
-          observer.complete();
-        },
-        (error) => {
-          observer.error(error);
-        }
-      );
-    });
+        );
+      });
+    }
   }
-  
 
- 
+  getDataseSetRegistrationsTemplate = (
+    dataSet: string,
+    organisationUnit: string,
+    period: string
+  ) => {
+    return {
+      period,
+      dataSet,
+      organisationUnit,
+      attributeOptionCombo: "uGIJ6IdkP7Q",
+      date: new Date(),
+      storedBy: "",
+      completed: false,
+    };
+  };
 
   getUserCompletenessInformation(
     username: string,

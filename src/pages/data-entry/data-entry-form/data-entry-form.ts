@@ -43,7 +43,6 @@ import { SynchronizationProvider } from "../../../providers/synchronization/sync
 import { ValidationRule, CurrentUser } from "../../../models";
 import { ValidationRulesProvider } from "../../../providers/validation-rules/validation-rules";
 import { OfflineCompletenessProvider } from "../../../providers/offline-completeness/offline-completeness";
-import { CompulsoryNotificationPage } from "../../compulsory-notification/compulsory-notification";
 import {
   OfflineCompleteDataValuePayload,
   OfflineSQLITEDataValue,
@@ -52,18 +51,16 @@ import {
 import { getStandardDataValuePayload } from "../../../helpers/srt-data-value-payload.helper";
 import { take } from "rxjs/operators";
 import {
-  CompletenessConfiguration,
+  CompleteDataSetRegistration,
   CompletenessPayload,
   CompletenessResponse,
   DataSetCompletenessInfo,
   EntryFormParameter,
   ShortImportSummary,
 } from "../../../models/completeness.model";
-import {
-  ImportResponse,
-  ImportSummary,
-} from "../../../models/import-response.model";
+import { ImportResponse } from "../../../models/import-response.model";
 import { NetworkAvailabilityProvider } from "../../../providers/network-availability/network-availability";
+import { LocalStorageProvider } from "../../../providers/local-storage/local-storage";
 
 declare var dhis2;
 
@@ -123,7 +120,8 @@ export class DataEntryFormPage implements OnInit {
     private synchronizationProvider: SynchronizationProvider,
     private validationRulesProvider: ValidationRulesProvider,
     private offlineCompletenessProvider: OfflineCompletenessProvider,
-    private networkAvailabilityProvider: NetworkAvailabilityProvider
+    private networkAvailabilityProvider: NetworkAvailabilityProvider,
+    private localStorageProvider: LocalStorageProvider
   ) {
     this.colorSettings$ = this.store.select(getCurrentUserColorSettings);
     this.dataEntryFormDesign = "";
@@ -168,25 +166,66 @@ export class DataEntryFormPage implements OnInit {
               this.entryFormParameter.dataSet.id
             );
 
-            this.dataSetCompletenessProvider
-              .getDataSetCompletenessInfo(
-                this.entryFormParameter.dataSet.id,
-                this.entryFormParameter.period.name,
-                this.entryFormParameter.orgUnit.id,
-                this.entryFormParameter.dataDimension,
-                this.currentUser
-              )
-              .subscribe(
-                (completenessConfiguration: CompletenessConfiguration) => {
-                  if (completenessConfiguration && completenessConfiguration.complete) {
-                    this.isDataSetCompletedAndLocked = completenessConfiguration.complete;
-                    this.isDataSetCompleted = completenessConfiguration.complete;
-                  } else {
-                    this.isDataSetCompletedAndLocked = false;
-                    this.isDataSetCompleted = false
-                  }
-                }
-              );
+            // Retriving Dataset Completeness From Server
+            if (this.entryFormParameter) {
+              const { isAvailable } =
+                this.networkAvailabilityProvider.getNetWorkStatus();
+              if (isAvailable) {
+                this.dataSetCompletenessProvider
+                  .getDataSetCompletenessInfo(
+                    this.entryFormParameter.dataSet.id,
+                    this.entryFormParameter.period.name,
+                    this.entryFormParameter.orgUnit.id,
+                    this.entryFormParameter.dataDimension,
+                    this.currentUser
+                  )
+                  .subscribe(
+                    (
+                      completeDataSetRegistration: CompleteDataSetRegistration
+                    ) => {
+                      this.offlineCompletenessProvider
+                        .savingOfflineEntryFormCompletenessOnFormOpening(
+                          this.currentUser,
+                          this.entryFormParameter.dataSet.id,
+                          this.entryFormParameter.period.name,
+                          this.entryFormParameter.orgUnit.id,
+                          completeDataSetRegistration
+                        )
+                        .subscribe((response: CompleteDataSetRegistration) => {
+                          if (response) {
+                            // Implement Logic
+                            console.log("Offline Completeness Saved");
+                            this.isDataSetCompletedAndLocked =
+                              response.completed;
+                            this.isDataSetCompleted = response.completed;
+                          }
+                        });
+
+                      this.setDataSetIsDataSetCompleted(
+                        completeDataSetRegistration.completed,
+                        this.entryFormParameter.dataSet.id,
+                        this.entryFormParameter.period.name,
+                        this.entryFormParameter.orgUnit.id
+                      ).subscribe((response: string) => {
+                        console.log(response);
+                        // Implement Functionality to set the dataSetIsCompleted
+                      });
+                    }
+                  );
+              } else {
+                this.appProvider.setNormalNotification(
+                  `Failed to check if dataset is completed due to network issue. Please check your internet connectivity`
+                );
+                this.getDataSetIsDataSetCompleted(
+                  this.entryFormParameter.dataSet.id,
+                  this.entryFormParameter.period.name,
+                  this.entryFormParameter.orgUnit.id
+                ).subscribe((dataSetIsCompleted) => {
+                  this.isDataSetCompletedAndLocked = dataSetIsCompleted;
+                  this.isDataSetCompleted = dataSetIsCompleted;
+                });
+              }
+            }
           });
       },
       (error) => {
@@ -201,6 +240,55 @@ export class DataEntryFormPage implements OnInit {
 
   goBack() {
     this.navCtrl.pop();
+  }
+
+  setDataSetIsDataSetCompleted(
+    completed: boolean,
+    dataSet: string,
+    orgUnit: string,
+    period: string
+  ): Observable<any> {
+    const localStorageCompletenessKey = _.trim(
+      `${dataSet}_${orgUnit}_${period}`
+    );
+    return new Observable((observer) => {
+      this.localStorageProvider
+        .setDataOnLocalStorage(completed, localStorageCompletenessKey)
+        .subscribe(
+          () => {
+            observer.next(
+              `DataSet Completeness Info with key: <${localStorageCompletenessKey}> successfully set`
+            );
+            observer.complete();
+          },
+          (error) => {
+            observer.error(error);
+          }
+        );
+    });
+  }
+
+  getDataSetIsDataSetCompleted(
+    dataSet: string,
+    orgUnit: string,
+    period: string
+  ): Observable<boolean> {
+    const localStorageCompletenessKey = _.trim(
+      `${dataSet}_${orgUnit}_${period}`
+    );
+    return new Observable((observer) => {
+      this.localStorageProvider
+        .getDataOnLocalStorage(localStorageCompletenessKey)
+        .subscribe(
+          (dataSetCompletenessInfo: boolean) => {
+            observer.next(dataSetCompletenessInfo);
+            observer.complete();
+          },
+          (error) => {
+            observer.error(error);
+          }
+        );
+    });
   }
 
   discoveringDataSetInformation(dataSetId) {
@@ -404,13 +492,8 @@ export class DataEntryFormPage implements OnInit {
       )
       .subscribe((dataSetCompleteness) => {
         this.dataSetsCompletenessInfo = dataSetCompleteness;
-        if (dataSetCompleteness && dataSetCompleteness.complete) {
-          this.isDataSetCompleted = true;
-          this.isDataSetCompletedAndLocked = true;
-        } else {
-          this.isDataSetCompleted = false;
-          this.isDataSetCompletedAndLocked = false;
-        }
+        this.isDataSetCompleted = dataSetCompleteness.completed;
+        this.isDataSetCompletedAndLocked = dataSetCompleteness.completed;
       });
   }
 
@@ -662,6 +745,38 @@ export class DataEntryFormPage implements OnInit {
                 completenessResponse.status === "CONFLICT")
             ) {
               // TODO: Implement Section In The Future If There Is A Need
+              this.offlineCompletenessProvider
+                .savingOfflineEntryFormCompletenessOnFormOpening(
+                  this.currentUser,
+                  this.entryFormParameter.dataSet.id,
+                  this.entryFormParameter.period.name,
+                  this.entryFormParameter.orgUnit.id,
+                  {
+                    period: this.entryFormParameter.period.name,
+                    dataSet: this.entryFormParameter.dataSet.id,
+                    organisationUnit: this.entryFormParameter.orgUnit.id,
+                    attributeOptionCombo:
+                      this.entryFormParameter.dataDimension.cc,
+                    date: new Date().toISOString().split("T")[0],
+                    storedBy: this.currentUser.username,
+                    completed: this.isDataSetCompleted,
+                  }
+                )
+                .subscribe(
+                  (response: any) => {
+                    if (response) {
+                      // Implement Logic
+                      console.log("Offline Completeness Saved");
+                    }
+                  },
+                  (error) => {
+                    this.isDataSetCompletenessProcessRunning = false;
+                    console.log(JSON.stringify(error));
+                    this.appProvider.setNormalNotification(
+                      "Failed to un complete entry form"
+                    );
+                  }
+                );
               this.isDataSetCompleted = false;
               this.isDataSetCompletenessProcessRunning = false;
               if (
@@ -674,6 +789,38 @@ export class DataEntryFormPage implements OnInit {
                 );
               }
             } else {
+              this.offlineCompletenessProvider
+                .savingOfflineEntryFormCompletenessOnFormOpening(
+                  this.currentUser,
+                  this.entryFormParameter.dataSet.id,
+                  this.entryFormParameter.period.name,
+                  this.entryFormParameter.orgUnit.id,
+                  {
+                    period: this.entryFormParameter.period.name,
+                    dataSet: this.entryFormParameter.dataSet.id,
+                    organisationUnit: this.entryFormParameter.orgUnit.id,
+                    attributeOptionCombo:
+                      this.entryFormParameter.dataDimension.cc,
+                    date: new Date().toISOString().split("T")[0],
+                    storedBy: this.currentUser.username,
+                    completed: !this.isDataSetCompleted,
+                  }
+                )
+                .subscribe(
+                  (response: any) => {
+                    if (response) {
+                      // Implement Logic
+                      console.log("Offline Completeness Saved");
+                    }
+                  },
+                  (error) => {
+                    this.isDataSetCompletenessProcessRunning = false;
+                    console.log(JSON.stringify(error));
+                    this.appProvider.setNormalNotification(
+                      "Failed to un complete entry form"
+                    );
+                  }
+                );
               this.offlineCompletenessProvider
                 .offlneEntryFormUncompleteness(
                   entryFormSelection,
@@ -767,6 +914,7 @@ export class DataEntryFormPage implements OnInit {
                   completenessResponse.status === "CONFLICT")
               ) {
                 // TODO: Implement Section In The Future If There Is A Need
+
                 this.isDataSetCompleted = false;
                 this.isDataSetCompletenessProcessRunning = false;
                 if (
@@ -782,19 +930,29 @@ export class DataEntryFormPage implements OnInit {
                 this.offlineCompletenessProvider
                   .offlneEntryFormCompleteness(
                     entryFormSelection,
-                    this.currentUser
+                    this.currentUser,
+                    {
+                      period: this.entryFormParameter.period.name,
+                      dataSet: this.entryFormParameter.dataSet.id,
+                      organisationUnit: this.entryFormParameter.orgUnit.id,
+                      attributeOptionCombo:
+                        this.entryFormParameter.dataDimension.cc,
+                      date: new Date().toISOString().split("T")[0],
+                      storedBy: this.currentUser.username,
+                      completed: !this.isDataSetCompleted,
+                    }
                   )
                   .subscribe(
                     (dataSetCompletenessInfo: DataSetCompletenessInfo) => {
                       this.dataSetsCompletenessInfo = dataSetCompletenessInfo;
-                      if (
-                        dataSetCompletenessInfo &&
-                        dataSetCompletenessInfo.complete
-                      ) {
-                        this.isDataSetCompleted = true;
+                      if (dataSetCompletenessInfo) {
+                        this.isDataSetCompletedAndLocked =
+                          dataSetCompletenessInfo.completed;
+                        this.isDataSetCompleted =
+                          dataSetCompletenessInfo.completed;
                         this.content.scrollToBottom(1000);
+                        this.isDataSetCompletenessProcessRunning = false;
                       }
-                      this.isDataSetCompletenessProcessRunning = false;
                     },
                     (error) => {
                       this.isDataSetCompletenessProcessRunning = false;
@@ -810,6 +968,7 @@ export class DataEntryFormPage implements OnInit {
         }
       }
     } else {
+      this.isDataSetCompletenessProcessRunning = false;
       this.appProvider.setNormalNotification(
         `Failed to complete/un-complete dataset due to network error. Please check your internet connectivity`
       );

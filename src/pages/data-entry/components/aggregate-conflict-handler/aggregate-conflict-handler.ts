@@ -136,10 +136,6 @@ export class AggregateConflictHandlerComponent implements OnInit {
                               this.dataSetCompletenessInfoAction.emit(
                                 dataSetCompletenessInfo
                               );
-                              console.log(
-                                "CAINAMIST DATASET COMPLETENESS URL::: " +
-                                  JSON.stringify(dataSetCompletenessInfo)
-                              );
 
                               this.isLoading = false;
                               if (this.dataValuesObject) {

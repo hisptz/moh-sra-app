@@ -510,8 +510,6 @@ export class DataValuesProvider {
                   importResponse.data
                 ) as ImportSummary;
 
-                console.log("SUNGU::: 8", JSON.stringify(importSummary));
-
                 // Success Count
                 importSummaries.success =
                   importSummaries.success +
@@ -546,13 +544,6 @@ export class DataValuesProvider {
                     this.reverseEngineerCheckBoxDataValueForOffline(
                       processedDataValues
                     );
-
-                  console.log("SUNGU::: PROCESSED 1 ", JSON.stringify(nuno));
-
-                  console.log(
-                    "SUNGU::: PROCESSED 2 ",
-                    JSON.stringify(processedDataValues)
-                  );
 
                   if (processedDataValues && processedDataValues.length > 0) {
                     this.sqlLite
